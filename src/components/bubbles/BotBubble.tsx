@@ -273,7 +273,7 @@ export const BotBubble = (props: Props) => {
             'background-color': props.backgroundColor ?? defaultBackgroundColor,
             color: props.textColor ?? defaultTextColor,
             'border-radius': '6px',
-            'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+            'font-size': props.fontSize ? `${props.fontSize}` : `${defaultFontSize}px`,
           }}
         />
       );
@@ -333,7 +333,8 @@ export const BotBubble = (props: Props) => {
                 'background-color': props.backgroundColor ?? defaultBackgroundColor,
                 color: props.textColor ?? defaultTextColor,
                 'border-radius': '6px',
-                'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px`,
+                'font-size': props.fontSize ? `${props.fontSize}` : `${defaultFontSize}px`,
+                'line-height': '1.625',
               }}
             />
           )}
@@ -386,7 +387,7 @@ export const BotBubble = (props: Props) => {
                   const URL = isValidURL(src.metadata.source);
                   return (
                     <SourceBubble
-                      pageContent={URL ? URL.pathname : src.pageContent}
+                      pageContent={URL ? `${URL.hostname.replace(/^www\./, '')}${URL.pathname}` : src.pageContent}
                       metadata={src.metadata}
                       onSourceClick={() => {
                         if (URL) {

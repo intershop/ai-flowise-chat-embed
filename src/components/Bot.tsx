@@ -798,7 +798,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   });
 
   createEffect(() => {
-    if (props.fontSize && botContainer) botContainer.style.fontSize = `${props.fontSize}px`;
+    if (props.fontSize && botContainer) botContainer.style.fontSize = `${props.fontSize}`;
   });
 
   // eslint-disable-next-line solid/reactivity
@@ -1239,8 +1239,16 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 <Avatar initialAvatarSrc={props.titleAvatarSrc} />
               </>
             </Show>
-            <Show when={props.title}>
+            {/* <Show when={props.title}>
               <span class="px-3 whitespace-pre-wrap font-semibold max-w-full">{props.title}</span>
+            </Show> */}
+            <Show when={true}>
+              <img
+                src="https://www.intershop.com/assets/images/c/logo_intershop_klein-0ac295fd.svg" // Add the path to your logo
+                alt="Logo"
+                class="px-3 max-w-full h-[18px]" // Adjust the size if needed
+                style={{ 'object-fit': 'contain' }} // Ensure the logo scales nicely
+              />
             </Show>
             <div style={{ flex: 1 }} />
             <DeleteButton
