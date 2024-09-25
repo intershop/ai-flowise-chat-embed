@@ -1,4 +1,4 @@
-import { Show, splitProps } from 'solid-js';
+import { Show, splitProps, createSignal } from 'solid-js';
 
 export type DisclaimerPopupProps = {
   isOpen?: boolean;
@@ -27,6 +27,8 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
     'backgroundColor',
   ]);
 
+  const [isHovered, setIsHovered] = createSignal(false);
+
   const handleAccept = () => {
     popupProps.onAccept?.();
   };
@@ -54,6 +56,8 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
               class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
               style={{ background: popupProps.buttonColor || '#3b82f6', color: popupProps.buttonTextColor || 'white' }}
               onClick={handleAccept}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
               {popupProps.buttonText ?? 'Start Chatting'}
             </button>

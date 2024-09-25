@@ -19,7 +19,7 @@ type Props = {
 
 const defaultBackgroundColor = '#3B81F6';
 const defaultTextColor = '#ffffff';
-const defaultFontSize = 16;
+const defaultFontSize = '16px';
 
 export const GuestBubble = (props: Props) => {
   let userMessageEl: HTMLDivElement | undefined;
@@ -84,7 +84,7 @@ export const GuestBubble = (props: Props) => {
           <span
             ref={userMessageEl}
             class="mr-2 whitespace-pre-wrap"
-            style={{ 'font-size': props.fontSize ? `${props.fontSize}px` : `${defaultFontSize}px` }}
+            style={{ 'font-size': props.fontSize ? `${props.fontSize}` : `${defaultFontSize}`, 'line-height': '1.625' }}
           />
         )}
       </div>
