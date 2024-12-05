@@ -11,11 +11,16 @@ const defaultIconColor = 'white';
 
 export type BubbleProps = BotProps & BubbleParams;
 
+const [isBotOpened, setIsBotOpened] = createSignal(false);
+const [isBotStarted, setIsBotStarted] = createSignal(false);
+
+export const closeBot = () => {
+  setIsBotOpened(false);
+};
+
 export const Bubble = (props: BubbleProps) => {
   const [bubbleProps] = splitProps(props, ['theme']);
 
-  const [isBotOpened, setIsBotOpened] = createSignal(false);
-  const [isBotStarted, setIsBotStarted] = createSignal(false);
   const [buttonPosition, setButtonPosition] = createSignal({
     bottom: bubbleProps.theme?.button?.bottom ?? 20,
     right: bubbleProps.theme?.button?.right ?? 20,

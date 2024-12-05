@@ -36,6 +36,7 @@ import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorage
 import { cloneDeep } from 'lodash';
 import { FollowUpPromptBubble } from '@/components/bubbles/FollowUpPromptBubble';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
+import { closeBot } from '@/features/bubble/components/Bubble';
 
 export type FileEvent<T = EventTarget> = {
   target: T;
@@ -488,6 +489,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setCookie('chatbotDisclaimer', 'true', 365); // Disclaimer accepted
   };
 
+  const handleDisclaimerDecline = () => {
+    closeBot(); // Close the chatbot
+  };
+
   const promptClick = (prompt: string) => {
     handleSubmit(prompt);
   };
@@ -570,6 +575,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       },
       async onmessage(ev) {
         const payload = JSON.parse(ev.data);
+
         switch (payload.event) {
           case 'start':
             setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage' }]);
@@ -609,6 +615,26 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             setLocalStorageChatflow(chatflowid, chatId);
             closeResponse();
             break;
+        }
+
+        // check if the last tool is leadCapture
+        if (payload.event === 'usedTools') {
+          console.log('lol');
+          console.log(payload.data[payload.data.length - 1].tool);
+          if (payload.data[payload.data.length - 1].tool === 'leadCapture') {
+            const result = await getChatbotConfig({
+              chatflowid: props.chatflowid,
+              apiHost: props.apiHost,
+              onRequest: props.onRequest,
+            });
+
+            const chatbotConfig = result.data;
+
+            if (chatbotConfig.leads) {
+              setLeadsConfig(chatbotConfig.leads);
+              setMessages((prevMessages) => [...prevMessages, { message: '', type: 'leadCaptureMessage' }]);
+            }
+          }
         }
       },
       async onclose() {
@@ -769,6 +795,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     if (leadEmail()) body.leadEmail = leadEmail();
 
+    // Ensure overrideConfig exists
+    //body.overrideConfig = { vars: { lead: !!leadEmail()} };
+    body.overrideConfig = { vars: { lead: leadEmail() ? 'true' : 'false' } };
+
+    console.log('body', body);
+
     if (action) body.action = action;
 
     if (isChatFlowAvailableToStream()) {
@@ -886,9 +918,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           type: 'apiMessage',
         },
       ];
-      if (leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead) {
-        messages.push({ message: '', type: 'leadCaptureMessage' });
-      }
+      // if (leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead) {
+      //   messages.push({ message: '', type: 'leadCaptureMessage' });
+      // }
       setMessages(messages);
     } catch (error: any) {
       const errorData = error.response.data || `${error.response.status}: ${error.response.statusText}`;
@@ -1017,12 +1049,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       if (chatbotConfig.uploads) {
         setUploadsConfig(chatbotConfig.uploads);
       }
-      if (chatbotConfig.leads) {
-        setLeadsConfig(chatbotConfig.leads);
-        if (chatbotConfig.leads?.status && !getLocalStorageChatflow(props.chatflowid)?.lead) {
-          setMessages((prevMessages) => [...prevMessages, { message: '', type: 'leadCaptureMessage' }]);
-        }
-      }
+      // if (chatbotConfig.leads) {
+      //   setLeadsConfig(chatbotConfig.leads);
+      //   if (chatbotConfig.leads?.status && !getLocalStorageChatflow(props.chatflowid)?.lead) {
+      //     setMessages((prevMessages) => [...prevMessages, { message: '', type: 'leadCaptureMessage' }]);
+      //   }
+      // }
       if (chatbotConfig.followUpPrompts) {
         setFollowUpPromptsStatus(chatbotConfig.followUpPrompts.status);
       }
@@ -1397,8 +1429,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             style={{
               background: props.bubbleBackgroundColor,
               color: props.bubbleTextColor,
-              'border-top-left-radius': props.isFullPage ? '0px' : '6px',
-              'border-top-right-radius': props.isFullPage ? '0px' : '6px',
+              'border-top-left-radius': props.isFullPage ? '0px' : '0px',
+              'border-top-right-radius': props.isFullPage ? '0px' : '0px',
             }}
           >
             <Show when={props.titleAvatarSrc}>
@@ -1407,16 +1439,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                 <Avatar initialAvatarSrc={props.titleAvatarSrc} />
               </>
             </Show>
-            {/* <Show when={props.title}>
+            <Show when={props.title}>
               <span class="px-3 whitespace-pre-wrap font-semibold max-w-full">{props.title}</span>
-            </Show> */}
-            <Show when={true}>
-              <img
-                src="https://www.intershop.com/assets/images/c/logo_intershop_klein-0ac295fd.svg" // Add the path to your logo
-                alt="Logo"
-                class="px-3 max-w-full h-[18px]" // Adjust the size if needed
-                style={{ 'object-fit': 'contain' }} // Ensure the logo scales nicely
-              />
             </Show>
             <div style={{ flex: 1 }} />
             <DeleteButton
@@ -1635,6 +1659,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         <DisclaimerPopup
           isOpen={disclaimerPopupOpen()}
           onAccept={handleDisclaimerAccept}
+          onDecline={handleDisclaimerDecline}
           title={props.disclaimer?.title}
           message={props.disclaimer?.message}
           textColor={props.disclaimer?.textColor}

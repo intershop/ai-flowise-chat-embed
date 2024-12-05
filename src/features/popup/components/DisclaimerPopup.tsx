@@ -3,6 +3,7 @@ import { Show, splitProps, createSignal } from 'solid-js';
 export type DisclaimerPopupProps = {
   isOpen?: boolean;
   onAccept?: () => void;
+  onDecline?: () => void;
   title?: string;
   message?: string;
   buttonText?: string;
@@ -11,11 +12,14 @@ export type DisclaimerPopupProps = {
   buttonColor?: string;
   textColor?: string;
   buttonTextColor?: string;
+  declineButtonText?: string;
+  closeButtonText?: string;
 };
 
 export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
   const [popupProps] = splitProps(props, [
     'onAccept',
+    'onDecline',
     'isOpen',
     'title',
     'message',
@@ -25,12 +29,26 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
     'buttonTextColor',    
     'blurredBackgroundColor',    
     'backgroundColor',
+    'declineButtonText',
+    'closeButtonText',
   ]);
 
-  const [isHovered, setIsHovered] = createSignal(false);
+  const [isHoveredAccept, setIsHoveredAccept] = createSignal(false);
+  const [isHoveredDecline, setIsHoveredDecline] = createSignal(false);
+  const [isHoveredClose, setIsHoveredClose] = createSignal(false);
+  const [isDeclined, setIsDeclined] = createSignal(false);
 
   const handleAccept = () => {
     popupProps.onAccept?.();
+  };
+
+  const handleDecline = () => {
+    setIsDeclined(true);
+  };
+
+  const handleClose = () => {
+    props.onDecline?.();
+    setIsDeclined(false);
   };
 
   return (
