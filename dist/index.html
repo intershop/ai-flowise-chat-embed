@@ -13,9 +13,9 @@
     import Chatbot from "https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/docs-intershop/dist/web.js"
     //import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
     const welcome = {
-      en: "Hello! Welcome to the Intershop documentation AI assistant! How can I assist you today? Currently, I can answer questions related to the latest version of ICM, IOM, CEC, IAC, SMC, and OMA.",
-      fr: "Bonjour ! Bienvenue sur l'assistant AI de la documentation Intershop ! Comment puis-je vous aider aujourd'hui ? Actuellement, je peux répondre aux questions relatives à la dernière version d'ICM, IOM, CEC, IAC, SMC et OMA.",
-      de: "Hallo! Willkommen beim Intershop-Dokumentations-AI-Assistenten! Wie kann ich Ihnen heute helfen? Derzeit kann ich Fragen zur neuesten Version von ICM, IOM, CEC, IAC, SMC und OMA beantworten."
+      en: "Hi! Need help with Intershop documentation? I'm the AI assistant specializing in the latest versions of ICM, IOM, CEC, IAC, SMC, and OMA. Feel free to ask me your questions.",
+      fr: "Bonjour ! Besoin d'aide avec la documentation Intershop ? Je suis l'assistant IA spécialisé dans les dernières versions d'ICM, IOM, CEC, IAC, SMC et OMA. N'hésitez pas à me poser vos questions.",
+      de: "Hallo! Brauchen Sie Hilfe mit der Intershop-Dokumentation? Ich bin der KI-Assistent, der auf die neuesten Versionen von ICM, IOM, CEC, IAC, SMC und OMA spezialisiert ist. Stellen Sie mir gerne Ihre Fragen."
     };
     var welcomeMessage=welcome.en;
     Chatbot.init({
@@ -34,7 +34,7 @@
               return match ? (validLangCodes.includes(match[1]) ? match[1] : null) : null;
             }
             const url = window.location.href;
-            var extracted_lang=getLangFromUrl(url)|| "en";
+            var extracted_lang=getLangFromUrl(url)|| "de";
             console.log(extracted_lang)
             welcomeMessage = welcome[extracted_lang] || welcome.en; // Default to English if the language key is missing.
 
@@ -76,12 +76,7 @@
           },
         },
 
-        customCSS: `
-    .bg-blue-500 {
-    --tw-bg-opacity: 1;
-    background-color:'#008e87'!important;
-}
-    `,
+        customCSS: ``,
         chatWindow: {
           showTitle: true,
           showAgentMessages: true,

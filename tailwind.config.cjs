@@ -31,6 +31,9 @@ module.exports = {
     theme: {
         ...rem2px(defaultTheme),
         extend: {
+            colors: {
+                'teal-custom': '#008e87', 
+              },
             keyframes: {
                 'fade-in': {
                     '0%': {
