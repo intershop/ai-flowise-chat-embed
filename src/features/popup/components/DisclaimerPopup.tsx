@@ -2,6 +2,7 @@ import { Show, splitProps, createSignal } from 'solid-js';
 
 export type DisclaimerPopupProps = {
   isOpen?: boolean;
+  isDeclined?: boolean;
   onAccept?: () => void;
   onDecline?: () => void;
   title?: string;
@@ -21,6 +22,7 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
     'onAccept',
     'onDecline',
     'isOpen',
+    'isDeclined',
     'title',
     'message',
     'textColor',
@@ -53,35 +55,88 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
 
   return (
     <Show when={popupProps.isOpen}>
-      <div
-        class="fixed inset-0 rounded-lg flex items-center justify-center backdrop-blur-sm z-50"
-        style={{ background: popupProps.blurredBackgroundColor || 'rgba(0, 0, 0, 0.4)' }} 
+      <div class="fixed inset-0 rounded-lg flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
+<div class="bg-white p-4 shadow-lg max-w-md w-full text-center font-sans">
+  <Show
+    when={!isDeclined()}
+    fallback={
+      <>
+        <h2 class="text-2xl font-semibold mb-4 flex" style={{ 'font-family': 'Source Serif Pro', 'text-align': 'left' }}>
+          Okay, we understand.
+        </h2>
+        <p class="mb-4" style={{ 'font-size': '0.75rem', color: '#333333', 'text-align': 'left' }}>
+          When you are ready to continue, feel free to come back to the chat and click "I agree". Thank you!
+        </p>
+        <button
+          style={{
+            'background-color': isHoveredClose() ? '#ec0a49' : '#C6183D',
+            'border-radius': '2.25em',
+            'font-weight': '400',
+            'font-size': '75%',
+            'line-height': '1',
+            padding: '0.75em 1em',
+            color: 'white',
+          }}
+          onMouseEnter={() => setIsHoveredClose(true)}
+          onMouseLeave={() => setIsHoveredClose(false)}
+          onClick={handleClose}
+        >
+          {popupProps.closeButtonText ?? 'Close'}
+        </button>
+      </>
+    }
+  >
+    <h2 class="text-2xl font-semibold mb-4 flex" style={{ 'font-family': 'Source Serif Pro', 'text-align': 'left' }}>
+      {popupProps.title ?? 'Disclaimer'}
+    </h2>
+    <p
+      class="mb-4"
+      style={{ 'font-size': '0.75rem', color: '#333333', 'text-align': 'left' }}
+      innerHTML={popupProps.message ?? 'By using this chatbot, you acknowledge and accept these terms.'}
+    />
+    <div class="flex justify-center space-x-4">
+      <button
+        style={{
+          'background-color': isHoveredAccept() ? '#ec0a49' : '#C6183D',
+          'border-radius': '2.25em',
+          'font-weight': '400',
+          'font-size': '75%',
+          'line-height': '1',
+          padding: '0.75em 1em',
+          color: 'white',
+        }}
+        onMouseEnter={() => setIsHoveredAccept(true)}
+        onMouseLeave={() => setIsHoveredAccept(false)}
+        onClick={handleAccept}
       >
-        <div class="p-10 rounded-lg shadow-lg max-w-md w-full text-center mx-4 font-sans" 
-          style={{ background: popupProps.backgroundColor || 'white', color: popupProps.textColor || 'black' }}>
-          <h2 class="text-2xl font-semibold mb-4 flex justify-center items-center">
-            {popupProps.title ?? 'Disclaimer'}
-          </h2>
-
-          <p
-            class="text-gray-700 text-base mb-6"
-            style={{ color: popupProps.textColor || 'black' }}
-            innerHTML={popupProps.message ?? 'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>.'}
-          />
-
-          <div class="flex justify-center">
-            <button
-              class="font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-              style={{ background: popupProps.buttonColor || '#3b82f6', color: popupProps.buttonTextColor || 'white' }}
-              onClick={handleAccept}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              {popupProps.buttonText ?? 'Start Chatting'}
-            </button>
-          </div>
-        </div>
+        {popupProps.buttonText ?? 'I Agree'}
+      </button>
+      <button
+        style={{
+          'background-color': 'white',
+          border: isHoveredDecline() ? '1px solid #C6183D'  : '1px solid #c6183d1a',
+          'border-radius': '2.25em',
+          'font-weight': '400',
+          'font-size': '75%',
+          'line-height': '1',
+          padding: '0.75em 1.0em',
+          color: '#c6183d',
+          transition: 'color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out',
+          cursor: 'pointer',
+          'text-align': 'center',
+          'user-select': 'none',
+        }}
+        onMouseEnter={() => setIsHoveredDecline(true)}
+        onMouseLeave={() => setIsHoveredDecline(false)}
+        onClick={handleDecline}
+      >
+        {popupProps.declineButtonText ?? 'Decline'}
+      </button>
+    </div>
+  </Show>
+</div>
       </div>
+
     </Show>
   );
 };
