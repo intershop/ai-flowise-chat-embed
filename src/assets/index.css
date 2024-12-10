@@ -7,7 +7,7 @@
   --chatbot-container-bg-color: transparent;
   --chatbot-container-font-family: 'Open Sans';
 
-  --chatbot-button-bg-color: #0042da;
+  --chatbot-button-bg-color: #008e87;
   --chatbot-button-color: #ffffff;
 
   --chatbot-host-bubble-bg-color: #f7f8ff;
@@ -186,15 +186,15 @@ textarea {
 
 .chatbot-button {
   color: var(--chatbot-button-color);
-  background-color: #0042da;
-  border: 1px solid #0042da;
+  background-color: #008e87;
+  border: 1px solid #008e87;
   border-radius: var(--chatbot-border-radius);
 }
 
 .chatbot-button.selectable {
   color: var(--chatbot-host-bubble-color);
   background-color: #f7f8ff;
-  border: 1px solid #0042da;
+  border: 1px solid #008e87;
 }
 
 .chatbot-host-bubble {
@@ -216,7 +216,7 @@ textarea {
 
 .chatbot-guest-bubble {
   color: var(--chatbot-guest-bubble-color);
-  background-color: #3b81f6;
+  background-color: #008e87;
   border-radius: 6px;
 }
 
@@ -451,12 +451,14 @@ textarea {
 
     div[part='button'], div[class='flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10'], .chatbot-container, .rounded-lg {
     border-radius: 0px !important;
+    background-color:#008e87!important;
   }
 
 button {
   cursor: default !important;
-  background-color:'#008e87'!important;
-}
+  background-color:#008e87!important;
+} 
+
 
 }
 .tooltip {
@@ -471,4 +473,17 @@ button {
   max-width: calc(100vw - 20px);
   font-size: var(--tooltip-font-size, 12px);
   transition: opacity 0.3s ease-in-out;
+}
+
+.teal-button {
+  background-color: #008e87;
+}
+
+.teal-button:hover {
+  background-color: darken(#008e87, 10%); /* Slightly darker shade on hover */
+}
+
+/* Or if you're not using a preprocessor like Sass/Less for darken: */
+.teal-button:hover {
+    background-color: #006a65; /* Manually pick a darker shade */
 }

@@ -6,6 +6,7 @@ export type DisclaimerPopupProps = {
   title?: string;
   message?: string;
   buttonText?: string;
+  
 };
 
 export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
