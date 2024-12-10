@@ -451,6 +451,7 @@ textarea {
 
     div[part='button'], div[class='flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10'], .chatbot-container, .rounded-lg {
     border-radius: 0px !important;
+    background-color:#008e87!important;
   }
 
 button {
