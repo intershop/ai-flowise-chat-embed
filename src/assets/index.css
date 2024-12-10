@@ -7,7 +7,7 @@
   --chatbot-container-bg-color: transparent;
   --chatbot-container-font-family: 'Open Sans';
 
-  --chatbot-button-bg-color: #0042da;
+  --chatbot-button-bg-color: #008e87;
   --chatbot-button-color: #ffffff;
 
   --chatbot-host-bubble-bg-color: #f7f8ff;
@@ -455,7 +455,7 @@ textarea {
 
 button {
   cursor: default !important;
-  background-color:'#008e87'!important;
+  background-color:#008e87!important;
 }
 
 }
