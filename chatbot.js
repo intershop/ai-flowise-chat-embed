@@ -1,12 +1,12 @@
-import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+import Chatbot from 'https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js';
 Chatbot.init({
-  chatflowid: "6a045bf3-f937-4f00-b26d-3bd269192132",
-  apiHost: "https://ish-flowise-app.azurewebsites.net",
+  chatflowid: '6a045bf3-f937-4f00-b26d-3bd269192132',
+  apiHost: 'https://ish-flowise-app.azurewebsites.net',
   chatflowConfig: {
     vars: {
       currentUrl: window.location.href,
-      service: "iap"
-    }
+      service: 'iap',
+    },
   },
   observersConfig: {},
   theme: {
@@ -27,9 +27,10 @@ Chatbot.init({
       showTitle: true,
       showAgentMessages: true,
       title: 'Intershop Documentation Chatbot',
-      titleAvatarSrc: "https://github.com/intershop/ai-flowise-chat-embed/src/assets/images/bot24.png",
-      
-      welcomeMessage: 'Hello! Welcome to the Intershop Documentation Ai assistant! How can I assist you today? Currently, I  set up to support ICM latest topics, so feel free to ask any questions related to ICM and its sub-products, OMA and SMC.',
+      titleAvatarSrc: 'https://github.com/intershop/ai-flowise-chat-embed/src/assets/images/bot24.png',
+
+      welcomeMessage:
+        'Hello! Welcome to the Intershop Documentation Ai assistant! How can I assist you today? Currently, I  set up to support ICM latest topics, so feel free to ask any questions related to ICM and its sub-products, OMA and SMC.',
       errorMessage: 'It seems that we are encountering a problem.',
       backgroundColor: '#ffffff',
       height: 700,
@@ -40,7 +41,7 @@ Chatbot.init({
       botMessage: {
         backgroundColor: '#f7f8ff',
         textColor: '#303235',
-       // showAvatar: true,
+        // showAvatar: true,
         //avatarSrc: 'https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png',
       },
       userMessage: {
@@ -69,7 +70,7 @@ Chatbot.init({
       disclaimer: {
         title: 'Disclaimer',
         message: 'By using this chatbot, you agree to the <a target="_blank" href="https://flowiseai.com/terms">Terms & Condition</a>',
-      }
+      },
     },
-  }
+  },
 });
