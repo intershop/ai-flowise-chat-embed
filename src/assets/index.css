@@ -238,7 +238,8 @@ textarea {
 }
 
 .chatbot-chat-view {
-  max-width: 800px;
+ max-width: 800px;
+  max-height: 90vh ;/*using vh will ensure that it dynamically calculating the screen high and occupy 90% of it */
 }
 
 .ping span {
@@ -384,12 +385,12 @@ textarea {
 }
 
 .markdownanswer a {
-  color: #16bed7;
+  color: #008e87;
   font-weight: 500;
 }
 
 .markdownanswer code {
-  color: #15cb19;
+  color: #17bfb7;
   font-weight: 500;
   white-space: pre-wrap !important;
 }
@@ -447,6 +448,7 @@ textarea {
     height: 100% !important;
     overflow: auto; 
     overflow-x: hidden; /* Prevent horizontal scrolling */
+    
   }
 
     div[part='button'], div[class='flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10'], .chatbot-container, .rounded-lg {
