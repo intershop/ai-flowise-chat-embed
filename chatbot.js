@@ -1,5 +1,5 @@
 //import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/docs-intershop/dist/web.js';
-import Chatbot from "https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js"
+import Chatbot from 'https://cdn.jsdelivr.net/npm/flowise-embed/dist/web.js';
 const welcome = {
   en: "Hi! Need help with Intershop documentation? I'm the AI assistant specializing in the latest versions of ICM, IOM, CEC, IAC, SMC, and OMA. Feel free to ask me your questions.",
   fr: "Bonjour ! Besoin d'aide avec la documentation Intershop ? Je suis l'assistant IA spécialisé dans les dernières versions d'ICM, IOM, CEC, IAC, SMC et OMA. N'hésitez pas à me poser vos questions.",
@@ -104,8 +104,7 @@ Chatbot.init({
       feedback: {
         color: '#303235',
         backgroundColor: '#008e87',
-        buttonColor: '#008e87'
-
+        buttonColor: '#008e87',
       },
       footer: {
         textColor: '#303235',
