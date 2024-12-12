@@ -6,7 +6,6 @@ export type DisclaimerPopupProps = {
   title?: string;
   message?: string;
   buttonText?: string;
-  
 };
 
 export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
@@ -29,7 +28,7 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
 
           <div class="flex justify-center">
             <button
-              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
+              class=" bg-[#008e87] hover:bg-[#006a65] text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
               onClick={handleAccept}
             >
               {popupProps.buttonText ?? 'Start Chatting'}

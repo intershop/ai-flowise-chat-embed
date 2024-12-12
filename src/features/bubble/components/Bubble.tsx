@@ -81,8 +81,9 @@ export const Bubble = (props: BubbleProps) => {
       <div
         part="bot"
         style={{
-          height: bubbleProps.theme?.chatWindow?.height ? `${bubbleProps.theme?.chatWindow?.height.toString()}px` : 'calc(100% - 150px)',
-          width: bubbleProps.theme?.chatWindow?.width ? `${bubbleProps.theme?.chatWindow?.width.toString()}px` : undefined,
+          height: `calc(100vh - ${Math.min(chatWindowBottom + 20, 150)}px)`, // Dynamic height
+          width: `min(90vw, 500px)`, // Max width 400px or 90% of the viewport
+          'max-height': '90vh', // Prevent exceeding 90% of screen height
           transition: 'transform 200ms cubic-bezier(0, 1.2, 1, 1), opacity 150ms ease-out',
           'transform-origin': 'bottom right',
           transform: isBotOpened() ? 'scale3d(1, 1, 1)' : 'scale3d(0, 0, 1)',
@@ -97,9 +98,9 @@ export const Bubble = (props: BubbleProps) => {
           right: `${Math.min(buttonPosition().right, window.innerWidth - 410)}px`,
         }}
         class={
-          `fixed sm:right-5 rounded-lg w-full sm:w-[400px] max-h-[704px]` +
+          `fixed sm:right-5 rounded-lg max-h-[90vh] w-[min(90vw,400px)]` +
           (isBotOpened() ? ' opacity-1' : ' opacity-0 pointer-events-none') +
-          ` bottom-${chatWindowBottom}px`
+          ` bottom-0`
         }
       >
         <Show when={isBotStarted()}>
