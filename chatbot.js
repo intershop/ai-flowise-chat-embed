@@ -4,33 +4,33 @@ const welcome = {
   fr: "Bonjour, Besoin d'aide avec le logiciel Intershop ? Je suis votre assistant IA, ici pour répondre aux questions des utilisateurs finaux. Posez-moi vos questions et je ferai de mon mieux pour vous aider. Commençons!",
   de: 'Hallo! Brauchen Sie Hilfe mit Intershop-Software? Ich bin Ihr KI-Assistent und beantworte gerne Ihre Fragen als Endnutzer. Fragen Sie mich etwas, und ich werde mein Bestes tun, um Ihnen zu helfen. Fangen wir an!',
 };
-const disclaimer={
-  en:"By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
-  fr:"Lorsque vous démarrez la discussion, vous consentez à notre politique de confidentialité et engagez un dialogue avec notre copilote assisté par IA. Pour plus d'informations, veuillez consulter notre <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >politique de confidentialité</a>.",
-  de:"Indem Sie den Chat starten, stimmen Sie unserer Datenschutzrichtlinie zu und treten in einen Dialog mit unserem KI-gestützten Co-Piloten ein. Bitte beachten Sie unsere <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >Datenschutzbestimmungen</a> für weitere Informationen.",
-}
+const disclaimer = {
+  en: "By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
+  fr: "Lorsque vous démarrez la discussion, vous consentez à notre politique de confidentialité et engagez un dialogue avec notre copilote assisté par IA. Pour plus d'informations, veuillez consulter notre <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >politique de confidentialité</a>.",
+  de: "Indem Sie den Chat starten, stimmen Sie unserer Datenschutzrichtlinie zu und treten in einen Dialog mit unserem KI-gestützten Co-Piloten ein. Bitte beachten Sie unsere <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >Datenschutzbestimmungen</a> für weitere Informationen.",
+};
 const problemMessage = {
-  en: "It seems that we are encountering a problem.",
-  fr: "Il semble que nous rencontrions un problème.",
-  de: "Es scheint, dass wir auf ein Problem stoßen.",
+  en: 'It seems that we are encountering a problem.',
+  fr: 'Il semble que nous rencontrions un problème.',
+  de: 'Es scheint, dass wir auf ein Problem stoßen.',
 };
 
 const charLimitMessage = {
-  en: "You exceeded the characters limit. Please input less than 50 characters.",
-  fr: "Vous avez dépassé la limite de caractères. Veuillez saisir moins de 50 caractères.",
-  de: "Sie haben das Zeichenlimit überschritten. Bitte geben Sie weniger als 50 Zeichen ein.",
+  en: 'You exceeded the characters limit. Please input less than 50 characters.',
+  fr: 'Vous avez dépassé la limite de caractères. Veuillez saisir moins de 50 caractères.',
+  de: 'Sie haben das Zeichenlimit überschritten. Bitte geben Sie weniger als 50 Zeichen ein.',
 };
 
 const privacyPolicy = {
-  en: "privacy policy",
-  fr: "politique de confidentialité",
-  de: "Datenschutzbestimmungen",
+  en: 'privacy policy',
+  fr: 'politique de confidentialité',
+  de: 'Datenschutzbestimmungen',
 };
 
 const ishLinks = {
-  en: "https://www.intershop.com/en/privacy-policy",
-  fr: "https://www.intershop.com/fr/protection-des-donnees",
-  de: "https://www.intershop.com/de/datenschutz",
+  en: 'https://www.intershop.com/en/privacy-policy',
+  fr: 'https://www.intershop.com/fr/protection-des-donnees',
+  de: 'https://www.intershop.com/de/datenschutz',
 };
 
 function getLangFromUrl(url) {
@@ -105,8 +105,8 @@ Chatbot.init({
       errorMessage: errorMessage,
       backgroundColor: '#ffffff',
       //set a pixel value
-     //height: 1000,
-     //width: 600,
+      //height: 1000,
+      //width: 600,
       fontSize: 16,
       clearChatOnReload: false,
       sourceDocsTitle: 'Sources:',
@@ -136,8 +136,7 @@ Chatbot.init({
       feedback: {
         color: '#303235',
         backgroundColor: '#ffffff',
-        buttonColor: '#ffffff'
-
+        buttonColor: '#ffffff',
       },
       footer: {
         textColor: '#303235',
