@@ -155,7 +155,7 @@ Chatbot.init({
         backgroundColor: '#ffffff',
         textColor: '#303235',
         sendButtonColor: '#008e87',
-        maxChars: 50,
+        maxChars: 500,
         maxCharsWarningMessage: charLimit,
         autoFocus: true,
         sendMessageSound: false,
