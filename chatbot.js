@@ -33,6 +33,30 @@ const ishLinks = {
   de: 'https://www.intershop.com/de/datenschutz',
 };
 
+const disclaimerTitle = {
+  en: 'Disclaimer',
+  fr: 'Avertissement',
+  de: 'Haftungsausschluss',
+};
+
+const disclaimerButton = {
+  en: 'Start Chatting',
+  fr: 'Commencer la discussion',
+  de: 'Chatten starten',
+};
+
+const textInput = {
+  en: 'Type your question',
+  fr: 'Tapez votre question',
+  de: 'Geben Sie Ihre Frage ein',
+};
+
+const sources = {
+  en: 'Sources:',
+  fr: 'Sources:',
+  de: 'Quellen:',
+};
+
 function getLangFromUrl(url) {
   const validLangCodes = ['en', 'de', 'fr'];
   const match = url.match(/\/([a-z]{2})(\/|$)/); // Slightly simplified regex
@@ -48,6 +72,10 @@ const errorMessage = problemMessage[extracted_lang] || problemMessage.en;
 const charLimit = charLimitMessage[extracted_lang] || charLimitMessage.en;
 const privacyPolicyText = privacyPolicy[extracted_lang] || privacyPolicy.en;
 const ishLink = ishLinks[extracted_lang] || ishLinks.en;
+const disclaimerTitleText = disclaimerTitle[extracted_lang] || disclaimerTitle.en;
+const disclaimerButtonText = disclaimerButton[extracted_lang] || disclaimerButton.en;
+const textInputText = textInput[extracted_lang] || textInput.en;
+const sourcesText = sources[extracted_lang] || sources.en;
 
 Chatbot.init({
   chatflowid: '8fba968e-f8ed-4401-8a9f-57eaa5f45535',
@@ -109,7 +137,7 @@ Chatbot.init({
       //width: 600,
       fontSize: 16,
       clearChatOnReload: false,
-      sourceDocsTitle: 'Sources:',
+      sourceDocsTitle: sourcesText,
       botMessage: {
         backgroundColor: '#f7f8ff',
         textColor: '#303235',
@@ -123,7 +151,7 @@ Chatbot.init({
         //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
       },
       textInput: {
-        placeholder: 'Type your question',
+        placeholder: textInputText,
         backgroundColor: '#ffffff',
         textColor: '#303235',
         sendButtonColor: '#008e87',
@@ -146,11 +174,11 @@ Chatbot.init({
       },
     },
     disclaimer: {
-      title: 'Disclaimer',
+      title: disclaimerTitleText,
       message: disclaimerMessage,
       textColor: 'black',
       buttonColor: '#008e87',
-      buttonText: 'Start Chatting',
+      buttonText: disclaimerButtonText,
       buttonTextColor: 'white',
       blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
       backgroundColor: 'white',
