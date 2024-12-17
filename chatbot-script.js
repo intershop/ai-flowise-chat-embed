@@ -98,8 +98,8 @@ function getServiceFromUrl(url) {
   const match = url.match(regex);
 
   if (match){
-    service_name=match[1];
-        return match ? (validServiceNames.includes(service_name)?  service_name:'unspecified'):'unspecified';
+    var service_name=match[1];
+    return validServiceNames.includes(service_name) ? service_name: 'unspecified';
   }
 
   // Return the matched service identifier if found; otherwise, default to 'icm'
