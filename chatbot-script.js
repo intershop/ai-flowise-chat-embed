@@ -87,6 +87,29 @@ const disclaimerButtonText = disclaimerButton[extracted_lang] || disclaimerButto
 const textInputText = textInput[extracted_lang] || textInput.en;
 const sourcesText = sources[extracted_lang] || sources.en;
 
+// Function to extract the service identifier
+function getServiceFromUrl(url) {
+  const validServiceNames = ['icm', 'omt', 'smc', 'iac', 'cec', 'oma'];
+  // Match the pattern to capture the service identifier before any two-letter language code
+  const regex = /\/([a-zA-Z]+)\/(en|fr|de)\//;;
+  
+  
+  // Execute the regex match
+  const match = url.match(regex);
+
+  if (match){
+    service_name=match[1];
+    return validServiceNames.includes(service_name)?  service_name:'unspecified'
+  }
+
+  // Return the matched service identifier if found; otherwise, default to 'icm'
+  return 'unspecified';
+}
+
+var extracted_service=getServiceFromUrl(url)||'unspecified'
+console.log(extracted_service);
+
+
 Chatbot.init({
   chatflowid: '8fba968e-f8ed-4401-8a9f-57eaa5f45535',
   apiHost: 'https://ish-flowise-app.azurewebsites.net',
@@ -94,25 +117,7 @@ Chatbot.init({
     vars: {
       currentUrl: window.location.href,
       lang: extracted_lang,
-      service: (() => {
-        // Access the current URL from the vars
-        // const currentUrl = 'https://docs.intershop.com/iap/olh/cec/en/';
-
-        // Function to extract the service identifier
-        function getServiceFromUrl(url) {
-          // Match the pattern after the domain or path
-          const regex = /(?:docs\.intershop\.com|file:\/\/\/D:\/documentation-online-help-(icm|iap|iom)\/src)/;
-          // const regex = /(?:docs\.intershop\.com|file:\/\/\/D:\/(documentation-online-help-icm|documentation-online-help-iap)\/src)\/(\w+)/;
-          const match = url.match(regex);
-          console.log(match);
-          // Return the matched group if found; otherwise, default to 'icm'
-          return match ? match[1] : 'icm';
-        }
-
-        const url = window.location.href;
-        // Execute the function to extract the service
-        return getServiceFromUrl(url);
-      })(),
+      service: extracted_service,
     },
   },
   observersConfig: {},
