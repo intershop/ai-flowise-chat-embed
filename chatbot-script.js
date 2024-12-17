@@ -59,10 +59,20 @@ const sources = {
 
 function getLangFromUrl(url) {
   const validLangCodes = ['en', 'de', 'fr'];
-  const match = url.match(/\/([a-z]{2})(\/|$)/); // Slightly simplified regex
-
-  return match ? (validLangCodes.includes(match[1]) ? match[1] : null) : null;
+  
+  // Regex to match language in path (/en/...) or in filename (_en.php, _de.php)
+  const match = url.match(/\/([a-z]{2})(\/|$)|_([a-z]{2})\.php/);
+  
+  if (match) {
+    // Check if language code is in group 1 (path) or group 3 (filename)
+    const langCode = match[1] || match[3];
+    return validLangCodes.includes(langCode) ? langCode : null;
+  }
+  
+  return null;
 }
+
+
 const url = window.location.href;
 var extracted_lang = getLangFromUrl(url) || 'en';
 console.log(extracted_lang);
