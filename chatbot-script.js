@@ -99,7 +99,7 @@ function getServiceFromUrl(url) {
 
   if (match){
     service_name=match[1];
-    return validServiceNames.includes(service_name)?  service_name:'unspecified'
+        return match ? (validServiceNames.includes(service_name)?  service_name:'unspecified'):'unspecified';
   }
 
   // Return the matched service identifier if found; otherwise, default to 'icm'
