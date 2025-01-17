@@ -619,9 +619,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
         // check if the last tool is leadCapture
         if (payload.event === 'usedTools') {
-          console.log('lol');
           console.log(payload.data[payload.data.length - 1].tool);
-          if (payload.data[payload.data.length - 1].tool === 'leadCapture') {
+          // if (payload.data[payload.data.length - 1].tool === 'leadCapture') {
+          if (payload.data[payload.data.length - 1].tool === 'createLead') {
             const result = await getChatbotConfig({
               chatflowid: props.chatflowid,
               apiHost: props.apiHost,
@@ -632,7 +632,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
             if (chatbotConfig.leads) {
               setLeadsConfig(chatbotConfig.leads);
-              setMessages((prevMessages) => [...prevMessages, { message: '', type: 'leadCaptureMessage' }]);
+              //setMessages((prevMessages) => [...prevMessages, { message: 'Policy', type: 'apiMessage' }]);
+              // setMessages((prevMessages) => [...prevMessages, { message: '', type: 'leadCaptureMessage' }]);
             }
           }
         }

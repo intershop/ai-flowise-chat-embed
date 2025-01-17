@@ -55,7 +55,7 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
 
   return (
     <Show when={popupProps.isOpen}>
-      <div class="fixed inset-0 rounded-lg flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
+      <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
         <div class="bg-white p-4 shadow-lg max-w-md w-full text-center font-sans">
           <Show
             when={!isDeclined()}
