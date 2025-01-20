@@ -619,7 +619,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
         // check if the last tool is leadCapture
         if (payload.event === 'usedTools') {
-          console.log(payload.data[payload.data.length - 1].tool);
+          // console.log(payload.data[payload.data.length - 1].tool);
           // if (payload.data[payload.data.length - 1].tool === 'leadCapture') {
           if (payload.data[payload.data.length - 1].tool === 'createLead') {
             const result = await getChatbotConfig({
@@ -631,7 +631,23 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             const chatbotConfig = result.data;
 
             if (chatbotConfig.leads) {
+              // get lead mail from creatLead tool
+              const leadEmail = payload.data[payload.data.length - 1].toolInput?.workemail
+              // const firstname = payload.data[payload.data.length - 1].toolInput?.firstname
+              // const lastname = payload.data[payload.data.length - 1].toolInput?.lastname
+              // save lead email to local storage
+              setLeadEmail(leadEmail);
+              // save lead to local storage
               setLeadsConfig(chatbotConfig.leads);
+
+              setLocalStorageChatflow(props.chatflowid, chatId, {
+                lead: {
+                  email: leadEmail,
+                  // name: `${firstname} ${lastname}`,
+                },
+              });
+
+              setIsLeadSaved(true);
               //setMessages((prevMessages) => [...prevMessages, { message: 'Policy', type: 'apiMessage' }]);
               // setMessages((prevMessages) => [...prevMessages, { message: '', type: 'leadCaptureMessage' }]);
             }
