@@ -632,7 +632,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
             if (chatbotConfig.leads) {
               // get lead mail from creatLead tool
-              const leadEmail = payload.data[payload.data.length - 1].toolInput?.workemail
+              const leadEmail = payload.data[payload.data.length - 1].toolInput?.workemail;
               // const firstname = payload.data[payload.data.length - 1].toolInput?.firstname
               // const lastname = payload.data[payload.data.length - 1].toolInput?.lastname
               // save lead email to local storage
