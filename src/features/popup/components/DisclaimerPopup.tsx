@@ -36,7 +36,7 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
     'declineButtonText',
     'closeButtonText',
     'declinedTitle',
-    'declinedMessage'
+    'declinedMessage',
   ]);
 
   const [isHoveredAccept, setIsHoveredAccept] = createSignal(false);
