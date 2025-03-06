@@ -1685,6 +1685,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           buttonTextColor={props.disclaimer?.buttonTextColor}
           blurredBackgroundColor={props.disclaimer?.blurredBackgroundColor}
           backgroundColor={props.disclaimer?.backgroundColor}
+          declineButtonText={props.disclaimer?.declineButtonText}
+          closeButtonText={props.disclaimer?.closeButtonText}
+          declinedTitle={props.disclaimer?.declinedTitle}
+          declinedMessage={props.disclaimer?.declinedMessage}
         />
       )}
     </>

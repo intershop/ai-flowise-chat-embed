@@ -15,6 +15,8 @@ export type DisclaimerPopupProps = {
   buttonTextColor?: string;
   declineButtonText?: string;
   closeButtonText?: string;
+  declinedTitle?: string;
+  declinedMessage?: string;
 };
 
 export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
@@ -33,6 +35,8 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
     'backgroundColor',
     'declineButtonText',
     'closeButtonText',
+    'declinedTitle',
+    'declinedMessage'
   ]);
 
   const [isHoveredAccept, setIsHoveredAccept] = createSignal(false);
@@ -62,10 +66,10 @@ export const DisclaimerPopup = (props: DisclaimerPopupProps) => {
             fallback={
               <>
                 <h2 class="text-2xl font-semibold mb-4 flex" style={{ 'font-family': 'Source Serif Pro', 'text-align': 'left' }}>
-                  Okay, we understand.
+                  {popupProps.declinedTitle ?? 'Okay, we understand.'}
                 </h2>
                 <p class="mb-4" style={{ 'font-size': '0.75rem', color: '#333333', 'text-align': 'left' }}>
-                  When you are ready to continue, feel free to come back to the chat and click "I agree". Thank you!
+                  {popupProps.declinedMessage ?? 'When you are ready to continue, feel free to come back to the chat and click "I agree". Thank you!'}
                 </p>
                 <button
                   style={{

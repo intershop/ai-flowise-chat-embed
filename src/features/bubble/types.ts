@@ -110,6 +110,10 @@ export type DisclaimerPopUpTheme = {
   buttonText?: string;
   blurredBackgroundColor?: string;
   backgroundColor?: string;
+  declineButtonText?: string;
+  closeButtonText?: string;
+  declinedTitle?: string;
+  declinedMessage?: string;
 };
 
 export type DateTimeToggleTheme = {
