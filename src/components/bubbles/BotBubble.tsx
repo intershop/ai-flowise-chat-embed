@@ -201,10 +201,32 @@ export const BotBubble = (props: Props) => {
 
   onMount(() => {
     if (botMessageEl) {
+      // Inhalt parsen und einfügen
       botMessageEl.innerHTML = Marked.parse(props.message.message);
+  
+      // Alle Links im botMessageEl auf _self setzen
       botMessageEl.querySelectorAll('a').forEach((link) => {
-        link.target = '_self';
+        if (link instanceof HTMLAnchorElement) {
+          link.target = '_self';
+        }
       });
+  
+      // Event-Listener für PDF-Links hinzufügen (typisiert als HTMLAnchorElement)
+      botMessageEl.querySelectorAll<HTMLAnchorElement>('a[href$=".pdf"]').forEach((link) => {
+        link.addEventListener('click', () => {
+          // Debug-Ausgabe zum Überprüfen, ob das Event ausgelöst wurde
+          console.log('pdfLinkClick event triggered:', link.href);
+          // Event an dataLayer senden (Fenster als any casten)
+          (window as any).dataLayer = (window as any).dataLayer || [];
+          (window as any).dataLayer.push({
+            event: 'pdfLinkClick',
+            pdfUrl: link.href,
+            source: 'chatbot'
+          });
+        });
+      });
+  
+      // Handle rating if it exists
       if (props.message.rating) {
         setRating(props.message.rating);
         if (props.message.rating === 'THUMBS_UP') {
@@ -213,6 +235,8 @@ export const BotBubble = (props: Props) => {
           setThumbsDownColor('#8B0000');
         }
       }
+  
+      // Create and append file annotation buttons if available
       if (props.fileAnnotations && props.fileAnnotations.length) {
         for (const annotations of props.fileAnnotations) {
           const button = document.createElement('button');
@@ -222,16 +246,20 @@ export const BotBubble = (props: Props) => {
           button.addEventListener('click', function () {
             downloadFile(annotations);
           });
+  
+          // Create an SVG container for the download icon
           const svgContainer = document.createElement('div');
           svgContainer.className = 'ml-2';
           svgContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#ffffff" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>`;
-
           button.appendChild(svgContainer);
+  
+          // Append the button to the bot message element
           botMessageEl.appendChild(button);
         }
       }
     }
-
+  
+    // Open the bot details element if the message is loading
     if (botDetailsEl && props.isLoading) {
       botDetailsEl.open = true;
     }

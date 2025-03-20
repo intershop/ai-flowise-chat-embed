@@ -9,7 +9,19 @@ export const SourceBubble = (props: Props) => (
     data-modal-target="defaultModal"
     data-modal-toggle="defaultModal"
     class="flex justify-start mb-2 items-start animate-fade-in host-container hover:brightness-90 active:brightness-75"
-    onClick={() => props.onSourceClick?.()}
+    onClick={() => {
+      const pdfUrl = (props.metadata as any)?.pdfUrl;
+      if (pdfUrl && typeof pdfUrl === 'string' && pdfUrl.endsWith('.pdf')) {
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        (window as any).dataLayer.push({
+          event: 'pdfLinkClick',
+          pdfUrl,
+          source: 'chatbot'
+        });
+        window.open(pdfUrl, '_blank');
+      }
+      props.onSourceClick?.();
+    }}
   >
     <span
       class="px-2 py-1 ml-1 whitespace-pre-wrap max-w-full max-w-[350px] chatbot-host-bubble w-full text-ellipsis overflow-hidden"
