@@ -1030,12 +1030,17 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     if (uploads && uploads.length > 0) body.uploads = uploads;
 
+    /**
+     * Custom ISH-Chatflow configuration:
+     * Override the body of a chatmessage to contain the icm_access_token, 
+     * which is stored in the local storage. In order to use the token in Flowise, 
+     * create a static variable 'user_token' and allow variable overrides in the config.
+     */
     if (props.chatflowConfig) {
       body.overrideConfig = {
         ...props.chatflowConfig,
         vars: {
           ...(typeof props.chatflowConfig.vars === 'object' ? props.chatflowConfig.vars : {}),
-          // Ensure vars is an object and set a fallback for user_token to prevent issues if the token is missing in localStorage.
           user_token: localStorage.getItem('icm_access_token') || '',
         },
       };
