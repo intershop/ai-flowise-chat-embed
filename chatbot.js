@@ -1,13 +1,13 @@
 import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/partner-ai-dev-day/dist/web.js';
 const welcome = {
-  en: "Welcome to our onboarding process! To get you set up with the right resources and support, I'll need to collect a few details. This will only take a moment.  Please provide your information in the following format:  - Full Name: [Your full name] - Email Address: [Your professional email] - Company Name: [The name of your company] - Your Position: [e.g., Project Manager, Developer, CEO]",
+  en: "Welcome to our onboarding process! To get you set up with the right resources and support, I'll need to collect a few details. This will only take a moment.",
   fr: "Bonjour, Besoin d'aide avec le logiciel Intershop ? Je suis votre assistant IA, ici pour répondre aux questions des utilisateurs finaux. Posez-moi vos questions et je ferai de mon mieux pour vous aider. Commençons!",
-  de: 'Hallo! Brauchen Sie Hilfe mit Intershop-Software? Ich bin Ihr KI-Assistent und beantworte gerne Ihre Fragen als Endnutzer. Fragen Sie mich etwas, und ich werde mein Bestes tun, um Ihnen zu helfen. Fangen wir an!',
+  de: 'Willkommen zu unserem Onboarding-Prozess! Um Ihnen die richtigen Ressourcen und Unterstützung bereitzustellen, benötige ich ein paar Details von Ihnen. Das dauert nur einen Moment.',
 };
 const disclaimer = {
-  en: "By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
+  en: "By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #c5083d;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
   fr: "Lorsque vous démarrez la discussion, vous consentez à notre politique de confidentialité et engagez un dialogue avec notre copilote assisté par IA. Pour plus d'informations, veuillez consulter notre <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >politique de confidentialité</a>.",
-  de: "Indem Sie den Chat starten, stimmen Sie unserer Datenschutzrichtlinie zu und treten in einen Dialog mit unserem KI-gestützten Co-Piloten ein. Bitte beachten Sie unsere <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >Datenschutzbestimmungen</a> für weitere Informationen.",
+  de: "Indem Sie den Chat starten, stimmen Sie unserer Datenschutzrichtlinie zu und treten in einen Dialog mit unserem KI-gestützten Co-Piloten ein. Bitte beachten Sie unsere <a target='_blank' style='color: #c5083d;' href='https://www.intershop.com/en/privacy-policy' >Datenschutzbestimmungen</a> für weitere Informationen.",
 };
 const problemMessage = {
   en: 'It seems that we are encountering a problem.',
@@ -64,7 +64,7 @@ function getLangFromUrl(url) {
   return match ? (validLangCodes.includes(match[1]) ? match[1] : null) : null;
 }
 const url = window.location.href;
-var extracted_lang = getLangFromUrl(url) || 'en';
+var extracted_lang = getLangFromUrl(url) || 'de';
 console.log(extracted_lang);
 const welcomeMessage = welcome[extracted_lang] || welcome.en; // Default to English if the language key is missing.
 const disclaimerMessage = disclaimer[extracted_lang] || disclaimer.en;
@@ -103,7 +103,7 @@ Chatbot.init({
     chatWindow: {
       showTitle: true,
       showAgentMessages: true,
-      title: 'Assistant',
+      title: 'KI Assistant',
       //titleAvatarSrc: " https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png",
 
       welcomeMessage: welcomeMessage,
