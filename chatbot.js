@@ -78,11 +78,9 @@ const textInputText = textInput[extracted_lang] || textInput.en;
 const sourcesText = sources[extracted_lang] || sources.en;
 
 Chatbot.init({
-  chatflowid: "e5d78a30-e021-4195-8740-efdfe374f27a",
-  apiHost: "https://ish-flowise-enterprise.cloud.intershop.com",
-  chatflowConfig: {
-   
-  },
+  chatflowid: 'e5d78a30-e021-4195-8740-efdfe374f27a',
+  apiHost: 'https://ish-flowise-enterprise.cloud.intershop.com',
+  chatflowConfig: {},
   observersConfig: {},
   theme: {
     button: {
@@ -151,13 +149,13 @@ Chatbot.init({
         companyLink: ishLink,
       },
     },
-     tooltip: {
-        showTooltip: true,
-        tooltipMessage: 'Hi There 👋!',
-        tooltipBackgroundColor: 'whilte',
-        tooltipTextColor: '#c5083d',
-        tooltipFontSize: 16,
-      },
+    tooltip: {
+      showTooltip: true,
+      tooltipMessage: 'Hi There 👋!',
+      tooltipBackgroundColor: 'whilte',
+      tooltipTextColor: '#c5083d',
+      tooltipFontSize: 16,
+    },
     disclaimer: {
       title: disclaimerTitleText,
       message: disclaimerMessage,
