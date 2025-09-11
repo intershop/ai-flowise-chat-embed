@@ -86,7 +86,7 @@ Chatbot.init({
   observersConfig: {},
   theme: {
     button: {
-      backgroundColor: '#008e87',
+      backgroundColor: '#c5083d',
       right: 20,
       bottom: 20,
       size: 48, // small | medium | large | number
@@ -103,7 +103,7 @@ Chatbot.init({
     chatWindow: {
       showTitle: true,
       showAgentMessages: true,
-      title: 'Intershop Documentation Copilot',
+      title: 'Assistant',
       //titleAvatarSrc: " https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png",
 
       welcomeMessage: welcomeMessage,
@@ -123,7 +123,7 @@ Chatbot.init({
         //avatarSrc: 'https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png',
       },
       userMessage: {
-        backgroundColor: '#008e87',
+        backgroundColor: '#c5083d',
         textColor: '#ffffff',
         //showAvatar: true,
         //avatarSrc: 'https://raw.githubusercontent.com/zahidkhawaja/langchain-chat-nextjs/main/public/usericon.png',
@@ -132,7 +132,7 @@ Chatbot.init({
         placeholder: textInputText,
         backgroundColor: '#ffffff',
         textColor: '#303235',
-        sendButtonColor: '#008e87',
+        sendButtonColor: '#c5083d',
         maxChars: 500,
         maxCharsWarningMessage: charLimit,
         autoFocus: true,
@@ -151,11 +151,18 @@ Chatbot.init({
         companyLink: ishLink,
       },
     },
+     tooltip: {
+        showTooltip: true,
+        tooltipMessage: 'Hi There 👋!',
+        tooltipBackgroundColor: 'whilte',
+        tooltipTextColor: '#c5083d',
+        tooltipFontSize: 16,
+      },
     disclaimer: {
       title: disclaimerTitleText,
       message: disclaimerMessage,
       textColor: 'black',
-      buttonColor: '#008e87',
+      buttonColor: '#c5083d',
       buttonText: disclaimerButtonText,
       buttonTextColor: 'white',
       blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
