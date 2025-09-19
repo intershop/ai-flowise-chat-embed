@@ -156,7 +156,7 @@ Chatbot.init({
     tooltip: {
       showTooltip: true,
       tooltipMessage: 'Hi There  👋!',
-      tooltipBackgroundColor: 'whilte',
+      tooltipBackgroundColor: 'white',
       tooltipTextColor: '#c5083d',
       tooltipFontSize: 16,
     },

@@ -70,5 +70,7 @@
     "tailwindcss": "3.3.1",
     "typescript": "5.0.3",
     "uuid": "^9.0.1"
-  }
+  },
+  "repository": "git@github.com:intershop/ai-flowise-chat-embed.git",
+  "author": "Ami Ouedraogo <A.Ouedraogo@intershop.de>"
 }
