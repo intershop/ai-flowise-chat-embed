@@ -1,6 +1,6 @@
 import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/partner-ai-dev-day/dist/web.js';
 const welcome = {
-  en: "Welcome to our onboarding process! To get you set up with the right resources and support, I'll need to collect a few details. This will only take a moment.",
+  en: "Hi there! I’m your AI Assistant – I’m here to help with all your basics questions about the Workshops. How can I assist you today?",
   fr: "Bonjour, Besoin d'aide avec le logiciel Intershop ? Je suis votre assistant IA, ici pour répondre aux questions des utilisateurs finaux. Posez-moi vos questions et je ferai de mon mieux pour vous aider. Commençons!",
   de: 'Willkommen zu unserem Onboarding-Prozess! Um Ihnen die richtigen Ressourcen und Unterstützung bereitzustellen, benötige ich ein paar Details von Ihnen. Das dauert nur einen Moment.',
 };
@@ -64,7 +64,7 @@ function getLangFromUrl(url) {
   return match ? (validLangCodes.includes(match[1]) ? match[1] : null) : null;
 }
 const url = window.location.href;
-var extracted_lang = getLangFromUrl(url) || 'de';
+var extracted_lang = getLangFromUrl(url) || 'en';
 console.log(extracted_lang);
 const welcomeMessage = welcome[extracted_lang] || welcome.en; // Default to English if the language key is missing.
 const disclaimerMessage = disclaimer[extracted_lang] || disclaimer.en;
@@ -101,13 +101,17 @@ Chatbot.init({
     chatWindow: {
       showTitle: true,
       showAgentMessages: true,
-      title: 'KI Assistant',
+      title: 'AI Assistant',
       //titleAvatarSrc: " https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png",
 
       welcomeMessage: welcomeMessage,
-
+      
       errorMessage: errorMessage,
       backgroundColor: '#ffffff',
+      starterPrompts: ['What is flowise ?', 'can you direct me to flowise documentation ?','what is ICM ?'], // It overrides the starter prompts set by the chat flow passed
+      starterPromptFontSize: 15,
+    
+      renderHTML: true,
       //set a pixel value
       //height: 1000,
       //width: 600,
@@ -151,7 +155,7 @@ Chatbot.init({
     },
     tooltip: {
       showTooltip: true,
-      tooltipMessage: 'Hi There 👋!',
+      tooltipMessage: 'Hi There  👋!',
       tooltipBackgroundColor: 'whilte',
       tooltipTextColor: '#c5083d',
       tooltipFontSize: 16,
