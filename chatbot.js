@@ -1,6 +1,6 @@
 import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/partner-ai-dev-day/dist/web.js';
 const welcome = {
-  en: "Hi there! I’m your AI Assistant – I’m here to help with all your basics questions about the Workshops. How can I assist you today?",
+  en: 'Hi there! I’m your AI Assistant – I’m here to help with all your basics questions about the Workshops. How can I assist you today?',
   fr: "Bonjour, Besoin d'aide avec le logiciel Intershop ? Je suis votre assistant IA, ici pour répondre aux questions des utilisateurs finaux. Posez-moi vos questions et je ferai de mon mieux pour vous aider. Commençons!",
   de: 'Willkommen zu unserem Onboarding-Prozess! Um Ihnen die richtigen Ressourcen und Unterstützung bereitzustellen, benötige ich ein paar Details von Ihnen. Das dauert nur einen Moment.',
 };
@@ -105,12 +105,12 @@ Chatbot.init({
       //titleAvatarSrc: " https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png",
 
       welcomeMessage: welcomeMessage,
-      
+
       errorMessage: errorMessage,
       backgroundColor: '#ffffff',
-      starterPrompts: ['What is flowise ?', 'can you direct me to flowise documentation ?','what is ICM ?'], // It overrides the starter prompts set by the chat flow passed
+      starterPrompts: ['What is flowise ?', 'can you direct me to flowise documentation ?', 'what is ICM ?'], // It overrides the starter prompts set by the chat flow passed
       starterPromptFontSize: 15,
-    
+
       renderHTML: true,
       //set a pixel value
       //height: 1000,
