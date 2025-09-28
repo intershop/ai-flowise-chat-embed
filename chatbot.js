@@ -101,14 +101,14 @@ Chatbot.init({
     chatWindow: {
       showTitle: true,
       showAgentMessages: true,
-      title: 'AI Assistant',
+      title: 'AI Dev Day Copilot',
       //titleAvatarSrc: " https://amisamyra99.github.io/chatbot-flowise-js-hosting/images/bot24.png",
 
       welcomeMessage: welcomeMessage,
 
       errorMessage: errorMessage,
       backgroundColor: '#ffffff',
-      starterPrompts: ['What is flowise ?', 'can you direct me to flowise documentation ?', 'what is ICM ?'], // It overrides the starter prompts set by the chat flow passed
+      starterPrompts: ['What is flowise ?', 'Can you direct me to flowise documentation ?', 'What is ICM ?'], // It overrides the starter prompts set by the chat flow passed
       starterPromptFontSize: 15,
 
       renderHTML: true,
