@@ -167,7 +167,7 @@ Chatbot.init({
       buttonColor: '#c5083d',
       buttonText: disclaimerButtonText,
       buttonTextColor: 'white',
-      blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interface
+      blurredBackgroundColor: 'rgba(0, 0, 0, 0.4)', //The color of the blurred background that overlays the chat interfac
       backgroundColor: 'white',
     },
   },
