@@ -1041,7 +1041,18 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         ...props.chatflowConfig,
         vars: {
           ...(typeof props.chatflowConfig.vars === 'object' ? props.chatflowConfig.vars : {}),
-          user_token: localStorage.getItem('icm_access_token') || '',
+                    //user_token: localStorage.getItem('icm_access_token') || '',
+          user_token: (() => {
+            const raw = decodeURIComponent(
+              document.cookie.split('; ').find(r => r.startsWith('apiToken='))?.split('=')[1] || ''
+            );
+            try {
+              const token = JSON.parse(raw).apiToken || '';
+              return token;
+            } catch {
+              return '';
+            }
+          })(),
         },
       };
     }
