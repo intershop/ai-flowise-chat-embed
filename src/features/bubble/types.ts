@@ -93,6 +93,8 @@ export type ButtonTheme = {
   right?: number;
   dragAndDrop?: boolean; // parameter to enable drag and drop(true or false)
   autoWindowOpen?: autoWindowOpenTheme;
+  ariaLabel?: string; // optional parameter for bubble button aria-label
+  iconAriaLabel?: string; // optional parameter for bubble button svg aria-label
 };
 
 export type ToolTipTheme = {

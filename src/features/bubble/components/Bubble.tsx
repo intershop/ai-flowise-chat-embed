@@ -83,6 +83,8 @@ export const Bubble = (props: BubbleProps) => {
       />
       <div
         part="bot"
+        role="dialog"
+        aria-modal="true"
         style={{
           height: bubbleProps.theme?.chatWindow?.height ? `${bubbleProps.theme?.chatWindow?.height.toString()}px` : 'calc(100% - 150px)',
           width: bubbleProps.theme?.chatWindow?.width ? `${bubbleProps.theme?.chatWindow?.width.toString()}px` : undefined,

@@ -25,8 +25,12 @@ export const init = (props: BotProps) => {
   destroy();
   const element = document.createElement('flowise-chatbot');
   Object.assign(element, props);
-  document.body.appendChild(element);
-  elementUsed = element;
+  const container = document.createElement('div');
+  container.setAttribute('role', 'complementary');
+  container.setAttribute('aria-label', 'Chatbot');
+  container.appendChild(element);
+  document.body.appendChild(container);
+  elementUsed = container;
 };
 
 export const destroy = () => {

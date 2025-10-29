@@ -84,6 +84,8 @@ export type ButtonTheme = {
     right?: number;
     dragAndDrop?: boolean;
     autoWindowOpen?: autoWindowOpenTheme;
+    ariaLabel?: string;
+    iconAriaLabel?: string;
 };
 export type ToolTipTheme = {
     showTooltip?: boolean;
