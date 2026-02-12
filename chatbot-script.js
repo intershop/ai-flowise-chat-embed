@@ -113,7 +113,8 @@ console.log(extracted_service);
 Chatbot.init({
  // chatflowid: '8fba968e-f8ed-4401-8a9f-57eaa5f45535',
   //apiHost: 'https://ish-flowise-app.azurewebsites.net',
-  chatflowid: "2f10770e-11c1-4821-b653-85dfde4a28ce",  
+  //chatflowid: "2f10770e-11c1-4821-b653-85dfde4a28ce",  // old version 
+  chatflowid: "06cbe974-87a2-4a91-b74b-e04b4ce4c183", // new version with updated prompt and more sources
   apiHost: "https://ish-flowise-enterprise.cloud.intershop.com",
 
 
