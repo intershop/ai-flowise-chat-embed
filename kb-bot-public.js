@@ -1,8 +1,14 @@
 import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/docs-intershop/dist/web.js';
 const welcome = {
-  en: " Welcome to the Intershop Navigator!Your expert guide for the Intershop Commerce Platform and products. If you need help regarding the product documentation, I’m here to assist. Ask your questions, and let’s explore solutions together!",
-  fr: "Bienvenue sur l'Intershop Navigator !Votre guide expert pour la plateforme Intershop Commerce et ses produits. Si vous avez besoin d'aide concernant la documentation produit, je suis là pour vous aider. Posez vos questions et explorons ensemble des solutions !",
-  de: 'Willkommen beim Intershop Navigator!Ihr Expertenguide für die Intershop Commerce Platform und ihre Produkte. Wenn Sie Hilfe zur Produktdokumentation benötigen, bin ich hier, um zu helfen. Stellen Sie Ihre Fragen und lassen Sie uns gemeinsam Lösungen finden!',
+en: "Welcome to the Intershop Navigator! \nYour expert guide to the Intershop Commerce Platform and products. If you need help with product documentation, I am here to assist. Ask your questions, and let us explore solutions together.",
+
+
+
+de:"Willkommen beim Intershop Navigator!\nIhr kompetenter Leitfaden zur Intershop Commerce Platform und zu den zugehörigen Produkten. Wenn Sie Unterstützung bei technischen Konfigurationen, bei der Fehlerbehebung oder bei der Produktdokumentation benötigen, unterstütze ich Sie gerne. Stellen Sie Ihre Fragen, und lassen Sie uns gemeinsam Lösungen erarbeiten.",
+
+
+
+fr: "Bienvenue dans l’Intershop Navigator !\nVotre guide expert de la plateforme Intershop Commerce et des produits Intershop. Si vous avez besoin d’aide concernant la documentation produit, je suis là pour vous assister. Posez vos questions, et explorons ensemble des solutions."
 };
 const disclaimer = {
   en: "By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
@@ -110,7 +116,7 @@ console.log(extracted_service);
 Chatbot.init({
   // chatflowid: '8fba968e-f8ed-4401-8a9f-57eaa5f45535',
   //apiHost: 'https://ish-flowise-app.azurewebsites.net',
-  //chatflowid: "2f10770e-11c1-4821-b653-85dfde4a28ce",  // old version
+  //chatflowid: "2f10770e-11c1-4821-b653-85dfde4a28ce",// old version
   chatflowid: '05802e14-2aa4-4d6d-971e-0cde1be436e3', // new version with updated prompt and more sources
   apiHost: 'https://ish-flowise-enterprise.cloud.intershop.com',
 

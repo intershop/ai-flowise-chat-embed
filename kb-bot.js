@@ -1,8 +1,16 @@
 import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/docs-intershop/dist/web.js';
 const welcome = {
-  en: "Welcome to the Intershop Navigator!Your expert guide for the Intershop Commerce Platform and products. Whether you need help with technical configurations, troubleshooting, or product documentation, I’m here to assist. Ask your questions, and let’s explore solutions together!",
-  fr: "Bienvenue sur l'Intershop Navigator !Votre guide expert pour la plateforme Intershop Commerce et ses produits. Que vous ayez besoin d'aide pour les configurations techniques, le dépannage ou la documentation produit, je suis là pour vous aider. Posez vos questions et explorons ensemble des solutions !",
-  de: 'Willkommen beim Intershop Navigator!Ihr Expertenguide für die Intershop Commerce Platform und ihre Produkte. Ob Sie Hilfe bei technischen Konfigurationen, der Fehlerbehebung oder der Produktdokumentation benötigen – ich bin hier, um zu helfen. Stellen Sie Ihre Fragen und lassen Sie uns gemeinsam Lösungen finden!',
+en :"Welcome to the Intershop Navigator!\nYour expert guide to the Intershop Commerce Platform and products. Whether you need help with technical configuration, troubleshooting, or product documentation, I am here to assist. Ask your questions, and let us explore solutions together.",
+
+
+
+de:"Willkommen beim Intershop Navigator!\nIhr kompetenter Leitfaden zur Intershop Commerce Platform und zu den zugehörigen Produkten. Wenn Sie Unterstützung bei technischen Konfigurationen, bei der Fehlerbehebung oder bei der Produktdokumentation benötigen, unterstütze ich Sie gerne. Stellen Sie Ihre Fragen, und lassen Sie uns gemeinsam Lösungen erarbeiten.",
+
+
+
+fr:"Bienvenue sur Intershop Navigator !\nVotre guide expert de la plateforme Intershop Commerce et de ses produits. Que vous ayez besoin d’aide pour la configuration technique, le dépannage ou la documentation produit, je suis là pour vous accompagner. Posez vos questions, et explorons ensemble des solutions."
+
+
 };
 const disclaimer = {
   en: "By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
