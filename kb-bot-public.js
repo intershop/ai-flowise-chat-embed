@@ -1,14 +1,10 @@
 import Chatbot from 'https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/docs-intershop/dist/web.js';
 const welcome = {
-en: "Welcome to the Intershop Navigator! \nYour expert guide to the Intershop Commerce Platform and products. If you need help with product documentation, I am here to assist. Ask your questions, and let us explore solutions together.",
+  en: 'Welcome to the Intershop Documentation Copilot! \nYour expert guide to the Intershop Commerce Platform and products. If you need help with product documentation, I am here to assist. Ask your questions, and let us explore solutions together.',
 
+  de: 'Willkommen beim Intershop Documentation Copilot! \nIhr kompetenter Leitfaden zur Intershop Commerce Platform und zu den zugehörigen Produkten. Wenn Sie Unterstützung bei technischen Konfigurationen, bei der Fehlerbehebung oder bei der Produktdokumentation benötigen, unterstütze ich Sie gerne. Stellen Sie Ihre Fragen, und lassen Sie uns gemeinsam Lösungen erarbeiten.',
 
-
-de:"Willkommen beim Intershop Navigator!\nIhr kompetenter Leitfaden zur Intershop Commerce Platform und zu den zugehörigen Produkten. Wenn Sie Unterstützung bei technischen Konfigurationen, bei der Fehlerbehebung oder bei der Produktdokumentation benötigen, unterstütze ich Sie gerne. Stellen Sie Ihre Fragen, und lassen Sie uns gemeinsam Lösungen erarbeiten.",
-
-
-
-fr: "Bienvenue dans l’Intershop Navigator !\nVotre guide expert de la plateforme Intershop Commerce et des produits Intershop. Si vous avez besoin d’aide concernant la documentation produit, je suis là pour vous assister. Posez vos questions, et explorons ensemble des solutions."
+  fr: 'Bienvenue dans l’Intershop Documentation Copilot! \nVotre guide expert de la plateforme Intershop Commerce et des produits Intershop. Si vous avez besoin d’aide concernant la documentation produit, je suis là pour vous assister. Posez vos questions, et explorons ensemble des solutions.',
 };
 const disclaimer = {
   en: "By starting the chat, you consent to our privacy policy and engage in a dialogue with our AI-supported copilot. Please refer to our <a target='_blank' style='color: #008e87;' href='https://www.intershop.com/en/privacy-policy' >privacy policy</a> for more information.",
