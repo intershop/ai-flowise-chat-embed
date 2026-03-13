@@ -1,7 +1,7 @@
 import Chatbot from "https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@website/intershop/dist/web.js"
     Chatbot.init({
         chatflowid: "574ef77d-cedb-4242-a96f-387e2dd06013",
-        apiHost: "https://ish-flowise-enterprise.cloud.intershop.com/",
+        apiHost: "https://ish-flowise-enterprise.cloud.intershop.com",
         chatflowConfig: {
         // topK: 2
         },
