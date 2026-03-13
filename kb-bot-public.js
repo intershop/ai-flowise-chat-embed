@@ -151,8 +151,8 @@ Chatbot.init({
       errorMessage: errorMessage,
       backgroundColor: '#ffffff',
       //set a pixel value
-      //height: 1000,
-      //width: 600,
+      height: 1500,
+      width: 1000,
       fontSize: 16,
       clearChatOnReload: false,
       sourceDocsTitle: sourcesText,
