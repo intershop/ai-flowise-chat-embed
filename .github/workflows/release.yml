@@ -52,6 +52,12 @@ jobs:
         with:
           tag_name: v${{ inputs.version }}
           name: v${{ inputs.version }}
+          body: |
+            ## CDN
+
+            ```
+            https://cdn.jsdelivr.net/gh/intershop/ai-flowise-chat-embed@v${{ inputs.version }}/dist/web.js
+            ```
           files: |
             dist/web.js
             dist/web.umd.js
