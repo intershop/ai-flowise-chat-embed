@@ -16,6 +16,7 @@ export const sendRequest = async <ResponseData>(
         headers?: Record<string, any>;
         formData?: FormData;
         onRequest?: (request: RequestInit) => Promise<void>;
+        signal?: AbortSignal;
       }
     | string,
 ): Promise<{ data?: ResponseData; error?: Error }> => {
@@ -36,6 +37,7 @@ export const sendRequest = async <ResponseData>(
       mode: 'cors',
       headers,
       body,
+      signal: typeof params !== 'string' ? params.signal : undefined,
     };
 
     if (typeof params !== 'string' && params.onRequest) {
@@ -149,4 +151,40 @@ export const getCookie = (cname: string): string => {
     }
   }
   return '';
+};
+
+export const resolveDialogContainer = (raw: unknown): HTMLElement | undefined => {
+  if (typeof raw === 'string') {
+    try {
+      const el = document.querySelector(raw) as HTMLElement | null;
+      if (el === null) {
+        console.warn(`[Flowise] dialogContainer selector "${raw}" did not match any element. Dialog will render inline.`);
+      }
+      return el ?? undefined;
+    } catch {
+      console.warn(`[Flowise] Invalid dialogContainer selector: "${raw}". Dialog will render inline.`);
+      return undefined;
+    }
+  }
+  if (raw instanceof HTMLElement) return raw;
+  return undefined;
+};
+
+export const getRecordingExtensionForMime = (mime: string) => {
+  const mimeToExt: Record<string, string> = {
+    'audio/webm': 'webm',
+    'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/ogg': 'ogg',
+    'audio/oga': 'ogg',
+    'audio/wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/x-wav': 'wav',
+  };
+  const extension = mimeToExt[mime];
+  if (extension) {
+    return extension;
+  }
+  console.warn(`Unsupported audio MIME type: ${mime}. Defaulting to 'webm'.`);
+  return 'webm';
 };

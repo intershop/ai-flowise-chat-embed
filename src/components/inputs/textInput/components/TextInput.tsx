@@ -2,6 +2,7 @@ import { ShortTextInput } from './ShortTextInput';
 import { isMobile } from '@/utils/isMobileSignal';
 import { Show, createSignal, createEffect, onMount, Setter } from 'solid-js';
 import { SendButton } from '@/components/buttons/SendButton';
+import { StopButton } from '@/components/buttons/StopButton';
 import { FileEvent, UploadsConfig } from '@/components/Bot';
 import { ImageUploadButton } from '@/components/buttons/ImageUploadButton';
 import { RecordAudioButton } from '@/components/buttons/RecordAudioButton';
@@ -31,6 +32,10 @@ type TextInputProps = {
   fullFileUploadAllowedTypes?: string;
   enableInputHistory?: boolean;
   maxHistorySize?: number;
+  isLoading?: boolean;
+  showAbortButton?: boolean;
+  isMessageStopping?: boolean;
+  onAbort?: () => void;
 };
 
 const defaultBackgroundColor = '#ffffff';
@@ -70,7 +75,9 @@ export const TextInput = (props: TextInputProps) => {
       }
       props.onSubmit(props.inputValue);
       if (props.sendMessageSound && audioRef) {
-        audioRef.play();
+        audioRef.play().catch(() => {
+          /* ignore autoplay errors */
+        });
       }
     }
   };
@@ -81,6 +88,37 @@ export const TextInput = (props: TextInputProps) => {
 
   const handleFileUploadClick = () => {
     if (fileUploadRef) fileUploadRef.click();
+  };
+
+  const handlePaste = (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+    for (const item of items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+
+    if (
+      imageFiles.length > 0 &&
+      (props.uploadsConfig?.isImageUploadAllowed || props.uploadsConfig?.isRAGFileUploadAllowed || props.isFullFileUpload)
+    ) {
+      e.preventDefault();
+      const dataTransfer = new DataTransfer();
+      const timestamp = Date.now();
+      imageFiles.forEach((file, index) => {
+        const ext = file.name.split('.').pop() || 'png';
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        const uniqueName = `${baseName}_${timestamp}_${index}.${ext}`;
+        const renamedFile = new File([file], uniqueName, { type: file.type });
+        dataTransfer.items.add(renamedFile);
+      });
+      const syntheticEvent = { target: { files: dataTransfer.files } } as FileEvent<HTMLInputElement>;
+      props.handleFileChange(syntheticEvent);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -148,6 +186,7 @@ export const TextInput = (props: TextInputProps) => {
         color: props.textColor ?? defaultTextColor,
       }}
       onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
     >
       <Show when={warningMessage() !== ''}>
         <div class="w-full px-4 pt-4 pb-1 text-red-500 text-sm" data-testid="warning-message">
@@ -220,15 +259,31 @@ export const TextInput = (props: TextInputProps) => {
             <span style={{ 'font-family': 'Poppins, sans-serif' }}>Record Audio</span>
           </RecordAudioButton>
         ) : null}
-        <SendButton
-          sendButtonColor={props.sendButtonColor}
-          type="button"
-          isDisabled={props.disabled || isSendButtonDisabled()}
-          class="m-0 h-14 flex items-center justify-center"
-          on:click={submit}
+        <Show
+          when={props.showAbortButton}
+          fallback={
+            <SendButton
+              sendButtonColor={props.sendButtonColor}
+              type="button"
+              isDisabled={props.disabled || isSendButtonDisabled()}
+              class="m-0 h-14 flex items-center justify-center"
+              on:click={submit}
+            >
+              <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
+            </SendButton>
+          }
         >
-          <span style={{ 'font-family': 'Poppins, sans-serif' }}>Send</span>
-        </SendButton>
+          <StopButton
+            sendButtonColor={props.sendButtonColor}
+            type="button"
+            isDisabled={props.isMessageStopping}
+            class="m-0 h-14 flex items-center justify-center"
+            on:click={() => props.onAbort?.()}
+            isStopping={props.isMessageStopping}
+          >
+            <span style={{ 'font-family': 'Poppins, sans-serif' }}>Stop</span>
+          </StopButton>
+        </Show>
       </div>
     </div>
   );

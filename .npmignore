@@ -1,4 +1,5 @@
 src
+.github
 rollup.config.js
 tailwind.config.cjs
 tsconfig.json
