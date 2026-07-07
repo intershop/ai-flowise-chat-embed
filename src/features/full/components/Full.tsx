@@ -2,6 +2,7 @@ import styles from '../../../assets/index.css';
 import { Bot, BotProps } from '@/components/Bot';
 import { BubbleParams } from '@/features/bubble/types';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { resolveDialogContainer } from '@/utils';
 
 const defaultButtonColor = '#3B81F6';
 const defaultIconColor = 'white';
@@ -53,8 +54,17 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
         <div
           style={{
             'background-color': props.theme?.chatWindow?.backgroundColor || '#ffffff',
-            height: props.theme?.chatWindow?.height ? `${props.theme?.chatWindow?.height.toString()}px` : '100dvh',
-            width: props.theme?.chatWindow?.width ? `${props.theme?.chatWindow?.width.toString()}px` : '100%',
+            height: props.theme?.chatWindow?.height
+              ? typeof props.theme.chatWindow.height === 'string'
+                ? props.theme.chatWindow.height
+                : `min(${props.theme.chatWindow.height}px, 100dvh)`
+              : '100dvh',
+            'max-height': '100dvh',
+            width: props.theme?.chatWindow?.width
+              ? typeof props.theme.chatWindow.width === 'string'
+                ? props.theme.chatWindow.width
+                : `${props.theme.chatWindow.width}px`
+              : '100%',
             margin: '0px',
             overflow: 'hidden', // Ensure no extra scrolling due to content overflow
           }}
@@ -93,6 +103,7 @@ export const Full = (props: FullProps, { element }: { element: HTMLElement }) =>
             disclaimer={props.theme?.disclaimer}
             dateTimeToggle={props.theme?.chatWindow?.dateTimeToggle}
             renderHTML={props.theme?.chatWindow?.renderHTML}
+            dialogContainer={resolveDialogContainer(props.dialogContainer)}
           />
         </div>
       </Show>

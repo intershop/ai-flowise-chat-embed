@@ -77,12 +77,16 @@ export type MessageType = {
     id?: string;
     followUpPrompts?: string;
     dateTime?: string;
+    thinking?: string;
+    thinkingDuration?: number;
+    isThinking?: boolean;
 };
 type observerConfigType = (accessor: string | boolean | object | MessageType[]) => void;
 export type observersConfigType = Record<'observeUserInput' | 'observeLoading' | 'observeMessages', observerConfigType>;
 export type BotProps = {
     chatflowid: string;
     apiHost?: string;
+    pageTitle?: string;
     onRequest?: (request: RequestInit) => Promise<void>;
     chatflowConfig?: Record<string, unknown>;
     backgroundColor?: string;
@@ -118,6 +122,8 @@ export type BotProps = {
     dateTimeToggle?: DateTimeToggleTheme;
     renderHTML?: boolean;
     closeBot?: () => void;
+    hasCustomHeader?: boolean;
+    dialogContainer?: HTMLElement;
 };
 export type LeadsConfig = {
     status: boolean;

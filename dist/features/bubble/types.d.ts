@@ -25,6 +25,7 @@ export type TextInputTheme = {
     sendSoundLocation?: string;
     receiveMessageSound?: boolean;
     receiveSoundLocation?: string;
+    enableInputHistory?: boolean;
 };
 export type UserMessageTheme = {
     backgroundColor?: string;
@@ -59,8 +60,8 @@ export type ChatWindowTheme = {
     errorMessage?: string;
     backgroundColor?: string;
     backgroundImage?: string;
-    height?: number;
-    width?: number;
+    height?: number | string;
+    width?: number | string;
     fontSize?: number;
     userMessage?: UserMessageTheme;
     botMessage?: BotMessageTheme;
@@ -74,6 +75,7 @@ export type ChatWindowTheme = {
     clearChatOnReload?: boolean;
     dateTimeToggle?: DateTimeToggleTheme;
     renderHTML?: boolean;
+    headerHtml?: string;
 };
 export type ButtonTheme = {
     size?: 'small' | 'medium' | 'large' | number;

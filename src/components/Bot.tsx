@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For, onMount, Show, mergeProps, on, createMemo } from 'solid-js';
+import { createSignal, createEffect, For, onMount, Show, mergeProps, on, createMemo, onCleanup } from 'solid-js';
 import { v4 as uuidv4 } from 'uuid';
 import {
   sendMessageQuery,
@@ -8,6 +8,9 @@ import {
   getChatbotConfig,
   FeedbackRatingType,
   createAttachmentWithFormData,
+  generateTTSQuery,
+  abortTTSQuery,
+  abortMessageQuery,
 } from '@/queries/sendMessageQuery';
 import { TextInput } from './inputs/textInput';
 import { GuestBubble } from './bubbles/GuestBubble';
@@ -28,14 +31,21 @@ import { Popup, DisclaimerPopup } from '@/features/popup';
 import { Avatar } from '@/components/avatars/Avatar';
 import { DeleteButton, SendButton } from '@/components/buttons/SendButton';
 import { FilePreview } from '@/components/inputs/textInput/components/FilePreview';
-import { CircleDotIcon, SparklesIcon, TrashIcon } from './icons';
+import { ChevronDownIcon, CircleDotIcon, SparklesIcon, TrashIcon } from './icons';
 import { CancelButton } from './buttons/CancelButton';
 import { cancelAudioRecording, startAudioRecording, stopAudioRecording } from '@/utils/audioRecording';
 import { LeadCaptureBubble } from '@/components/bubbles/LeadCaptureBubble';
-import { removeLocalStorageChatHistory, getLocalStorageChatflow, setLocalStorageChatflow, setCookie, getCookie } from '@/utils';
-import { cloneDeep } from 'lodash';
+import {
+  removeLocalStorageChatHistory,
+  getLocalStorageChatflow,
+  setLocalStorageChatflow,
+  setCookie,
+  getCookie,
+  getRecordingExtensionForMime,
+} from '@/utils';
 import { FollowUpPromptBubble } from '@/components/bubbles/FollowUpPromptBubble';
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source';
+import { CHAT_HEADER_HEIGHT } from '@/constants';
 
 export type FileEvent<T = EventTarget> = {
   target: T;
@@ -124,6 +134,9 @@ export type MessageType = {
   id?: string;
   followUpPrompts?: string;
   dateTime?: string;
+  thinking?: string;
+  thinkingDuration?: number;
+  isThinking?: boolean;
 };
 
 type IUploads = {
@@ -139,6 +152,7 @@ export type observersConfigType = Record<'observeUserInput' | 'observeLoading' |
 export type BotProps = {
   chatflowid: string;
   apiHost?: string;
+  pageTitle?: string;
   onRequest?: (request: RequestInit) => Promise<void>;
   chatflowConfig?: Record<string, unknown>;
   backgroundColor?: string;
@@ -172,6 +186,8 @@ export type BotProps = {
   dateTimeToggle?: DateTimeToggleTheme;
   renderHTML?: boolean;
   closeBot?: () => void;
+  hasCustomHeader?: boolean;
+  dialogContainer?: HTMLElement;
 };
 
 export type LeadsConfig = {
@@ -458,6 +474,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   let chatContainer: HTMLDivElement | undefined;
   let bottomSpacer: HTMLDivElement | undefined;
   let botContainer: HTMLDivElement | undefined;
+  const [showScrollButton, setShowScrollButton] = createSignal(false);
+  let stickyToBottom = true;
 
   const [userInput, setUserInput] = createSignal('');
   const [loading, setLoading] = createSignal(false);
@@ -484,6 +502,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [isLeadSaved, setIsLeadSaved] = createSignal(false);
   const [leadEmail, setLeadEmail] = createSignal('');
   const [disclaimerPopupOpen, setDisclaimerPopupOpen] = createSignal(false);
+  const [isThinking, setIsThinking] = createSignal(false);
 
   const [openFeedbackDialog, setOpenFeedbackDialog] = createSignal(false);
   const [feedback, setFeedback] = createSignal('');
@@ -516,6 +535,25 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   const [uploadedFiles, setUploadedFiles] = createSignal<{ file: File; type: string }[]>([]);
   const [fullFileUploadAllowedTypes, setFullFileUploadAllowedTypes] = createSignal('*');
 
+  // TTS state
+  const [isTTSLoading, setIsTTSLoading] = createSignal<Record<string, boolean>>({});
+  const [isTTSPlaying, setIsTTSPlaying] = createSignal<Record<string, boolean>>({});
+  const [ttsAudio, setTtsAudio] = createSignal<Record<string, HTMLAudioElement>>({});
+  const [isTTSEnabled, setIsTTSEnabled] = createSignal(false);
+  const [ttsStreamingState, setTtsStreamingState] = createSignal({
+    mediaSource: null as MediaSource | null,
+    sourceBuffer: null as SourceBuffer | null,
+    audio: null as HTMLAudioElement | null,
+    chunkQueue: [] as Uint8Array[],
+    isBuffering: false,
+    audioFormat: null as string | null,
+    abortController: null as AbortController | null,
+  });
+
+  // TTS auto-scroll prevention refs
+  let isTTSActionRef = false;
+  let ttsTimeoutRef: ReturnType<typeof setTimeout> | null = null;
+
   createMemo(() => {
     const customerId = (props.chatflowConfig?.vars as any)?.customerId;
     setChatId(customerId ? `${customerId.toString()}+${uuidv4()}` : uuidv4());
@@ -541,16 +579,75 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         });
     }
 
-    if (!bottomSpacer) return;
-    setTimeout(() => {
-      chatContainer?.scrollTo(0, chatContainer.scrollHeight);
-    }, 50);
+    scrollToBottom()
+
+    let isProgrammaticScroll = false;
+    const handleScroll = () => {
+      if (!chatContainer || isProgrammaticScroll) return;
+      const threshold = 80;
+      const nearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight <= threshold;
+      stickyToBottom = nearBottom;
+      setShowScrollButton(!nearBottom);
+    };
+    chatContainer?.addEventListener('scroll', handleScroll, { passive: true });
+    onCleanup(() => chatContainer?.removeEventListener('scroll', handleScroll));
+
+    const handleExternalClearChat = async (e: Event) => {
+      const targetId = (e as CustomEvent).detail?.id;
+      if (targetId) {
+        const root = chatContainer?.getRootNode();
+        const hostEl = root instanceof ShadowRoot ? root.host : chatContainer?.closest(`#${CSS.escape(targetId)}`);
+        if (!hostEl || hostEl.id !== targetId) return;
+      }
+      if (loading()) await handleAbort();
+      clearChat();
+    };
+    document.addEventListener('flowise-clear-chat', handleExternalClearChat);
+    onCleanup(() => document.removeEventListener('flowise-clear-chat', handleExternalClearChat));
+
+    // Expose programmatic scroll guard to outer scope
+    let guardTimeout: ReturnType<typeof setTimeout> | null = null;
+    programmaticScrollGuard = (fn: () => void) => {
+      isProgrammaticScroll = true;
+      if (guardTimeout) clearTimeout(guardTimeout);
+      fn();
+      guardTimeout = setTimeout(() => {
+        isProgrammaticScroll = false;
+      }, 500);
+    };
   });
 
+  let programmaticScrollGuard: (fn: () => void) => void = (fn) => fn();
+
   const scrollToBottom = () => {
+    if (!stickyToBottom) return;
     setTimeout(() => {
       chatContainer?.scrollTo(0, chatContainer.scrollHeight);
     }, 50);
+  };
+
+  const forceScrollToBottom = () => {
+    stickyToBottom = true;
+    setShowScrollButton(false);
+    programmaticScrollGuard(() => {
+      chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+    });
+  };
+
+  // Helper function to manage TTS action flag
+  const setTTSAction = (isActive: boolean) => {
+    isTTSActionRef = isActive;
+    if (ttsTimeoutRef) {
+      clearTimeout(ttsTimeoutRef);
+      ttsTimeoutRef = null;
+    }
+    if (isActive) {
+      // Reset the flag after a longer delay to ensure all state changes are complete
+      ttsTimeoutRef = setTimeout(() => {
+        isTTSActionRef = false;
+        ttsTimeoutRef = null;
+      }, 300);
+    }
   };
 
   /**
@@ -581,34 +678,40 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       if (props.textInput?.receiveSoundLocation) {
         audioSrc = props.textInput?.receiveSoundLocation;
       }
+      if (audioRef) {
+        audioRef.pause();
+        audioRef.currentTime = 0;
+      }
       audioRef = new Audio(audioSrc);
-      audioRef.play();
+      audioRef.play().catch(() => {
+        /* ignore autoplay errors */
+      });
     }
   };
 
   let hasSoundPlayed = false;
+  let isStreaming = false;
 
   const updateLastMessage = (text: string) => {
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-      if (!text) return allMessages;
-      allMessages[allMessages.length - 1].message += text;
-      allMessages[allMessages.length - 1].rating = undefined;
-      allMessages[allMessages.length - 1].dateTime = new Date().toISOString();
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      if (!text) return prevMessages;
+      const updatedMsg = { ...lastMsg, message: lastMsg.message + text, rating: undefined, dateTime: new Date().toISOString() };
       if (!hasSoundPlayed) {
         playReceiveSound();
         hasSoundPlayed = true;
       }
-      addChatMessage(allMessages);
+      const allMessages = [...prevMessages.slice(0, -1), updatedMsg];
+      if (!isStreaming) addChatMessage(allMessages);
       return allMessages;
     });
   };
 
   const updateErrorMessage = (errorMessage: string) => {
+    const cleanedMessage = errorMessage.replace(/^Error:\s*\S+\s*-\s*/, '');
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      allMessages.push({ message: props.errorMessage || errorMessage, type: 'apiMessage' });
+      const allMessages = [...prevMessages, { message: props.errorMessage || cleanedMessage, type: 'apiMessage' as messageType }];
       addChatMessage(allMessages);
       return allMessages;
     });
@@ -622,27 +725,27 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         }
         return item;
       });
-      addChatMessage(updated);
+      if (!isStreaming) addChatMessage(updated);
       return [...updated];
     });
   };
 
   const updateLastMessageUsedTools = (usedTools: any[]) => {
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-      allMessages[allMessages.length - 1].usedTools = usedTools;
-      addChatMessage(allMessages);
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, usedTools }];
+      if (!isStreaming) addChatMessage(allMessages);
       return allMessages;
     });
   };
 
   const updateLastMessageFileAnnotations = (fileAnnotations: any) => {
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-      allMessages[allMessages.length - 1].fileAnnotations = fileAnnotations;
-      addChatMessage(allMessages);
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, fileAnnotations }];
+      if (!isStreaming) addChatMessage(allMessages);
       return allMessages;
     });
   };
@@ -655,7 +758,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         }
         return item;
       });
-      addChatMessage(updated);
+      if (!isStreaming) addChatMessage(updated);
       return [...updated];
     });
   };
@@ -665,30 +768,29 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage', agentFlowEventStatus: event }]);
     } else {
       setMessages((prevMessages) => {
-        const allMessages = [...cloneDeep(prevMessages)];
-        if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-        allMessages[allMessages.length - 1].agentFlowEventStatus = event;
-        return allMessages;
+        const lastMsg = prevMessages[prevMessages.length - 1];
+        if (lastMsg.type === 'userMessage') return prevMessages;
+        return [...prevMessages.slice(0, -1), { ...lastMsg, agentFlowEventStatus: event }];
       });
     }
   };
 
   const updateAgentFlowExecutedData = (agentFlowExecutedData: any) => {
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-      allMessages[allMessages.length - 1].agentFlowExecutedData = agentFlowExecutedData;
-      addChatMessage(allMessages);
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, agentFlowExecutedData }];
+      if (!isStreaming) addChatMessage(allMessages);
       return allMessages;
     });
   };
 
   const updateLastMessageArtifacts = (artifacts: FileUpload[]) => {
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-      allMessages[allMessages.length - 1].artifacts = artifacts;
-      addChatMessage(allMessages);
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, artifacts }];
+      if (!isStreaming) addChatMessage(allMessages);
       return allMessages;
     });
   };
@@ -701,9 +803,42 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         }
         return item;
       });
-      addChatMessage(updated);
+      if (!isStreaming) addChatMessage(updated);
       return [...updated];
     });
+  };
+
+  const handleThinkingEvent = (data: string, duration?: number) => {
+    if (data && duration === undefined) {
+      setIsThinking(true);
+      setMessages((prevMessages) => {
+        const lastMsg = prevMessages[prevMessages.length - 1];
+        if (lastMsg.type === 'userMessage') return prevMessages;
+        const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, thinking: (lastMsg.thinking || '') + data, isThinking: true }];
+        if (!isStreaming) addChatMessage(allMessages);
+        return allMessages;
+      });
+    } else if (data === '' && duration !== undefined) {
+      setIsThinking(false);
+      setMessages((prevMessages) => {
+        const lastMsg = prevMessages[prevMessages.length - 1];
+        if (lastMsg.type === 'userMessage') return prevMessages;
+        const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, thinkingDuration: duration, isThinking: false }];
+        if (!isStreaming) addChatMessage(allMessages);
+        return allMessages;
+      });
+    }
+  };
+
+  const finalizeThinking = () => {
+    if (isThinking()) {
+      setIsThinking(false);
+      setMessages((prevMessages) => {
+        const lastMsg = prevMessages[prevMessages.length - 1];
+        if (lastMsg.type === 'userMessage') return prevMessages;
+        return [...prevMessages.slice(0, -1), { ...lastMsg, isThinking: false }];
+      });
+    }
   };
 
   const clearPreviews = () => {
@@ -743,6 +878,28 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     handleSubmit(prompt);
   };
 
+  const handleRegenerateResponse = async (messageIndex: number) => {
+    if (loading()) return;
+    if (previews().length) return;
+    if (startInputType() === 'formInput') return;
+
+    const currentMessages = messages();
+    const targetMessage = currentMessages[messageIndex];
+    if (!targetMessage || targetMessage.type !== 'apiMessage') return;
+
+    const previousMessage = currentMessages[messageIndex - 1];
+    if (!previousMessage || previousMessage.type !== 'userMessage' || previousMessage.fileUploads?.length) return;
+
+    setFollowUpPrompts([]);
+    const updatedMessages = currentMessages.slice(0, messageIndex);
+    addChatMessage(updatedMessages);
+    setMessages(updatedMessages);
+
+    // Note: chatId is kept so the server retains conversation context up to this point.
+    // The server's history will still include messages that were removed client-side
+    await handleSubmit(previousMessage.message, undefined, undefined, { skipAddUserMessage: true });
+  };
+
   const updateMetadata = (data: any, input: string) => {
     if (data.chatId) {
       setChatId(data.chatId);
@@ -751,12 +908,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     // set message id that is needed for feedback
     if (data.chatMessageId) {
       setMessages((prevMessages) => {
-        const allMessages = [...cloneDeep(prevMessages)];
-        if (allMessages[allMessages.length - 1].type === 'apiMessage') {
-          allMessages[allMessages.length - 1].messageId = data.chatMessageId;
+        const lastMsg = prevMessages[prevMessages.length - 1];
+        if (lastMsg.type === 'apiMessage') {
+          const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, messageId: data.chatMessageId }];
+          addChatMessage(allMessages);
+          return allMessages;
         }
-        addChatMessage(allMessages);
-        return allMessages;
+        return prevMessages;
       });
     }
 
@@ -764,9 +922,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       // the response contains the question even if it was in an audio format
       // so if input is empty but the response contains the question, update the user message to show the question
       setMessages((prevMessages) => {
-        const allMessages = [...cloneDeep(prevMessages)];
-        if (allMessages[allMessages.length - 2].type === 'apiMessage') return allMessages;
-        allMessages[allMessages.length - 2].message = data.question;
+        const secondLast = prevMessages[prevMessages.length - 2];
+        if (secondLast.type === 'apiMessage') return prevMessages;
+        const allMessages = [...prevMessages.slice(0, -2), { ...secondLast, message: data.question }, prevMessages[prevMessages.length - 1]];
         addChatMessage(allMessages);
         return allMessages;
       });
@@ -774,9 +932,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     if (data.followUpPrompts) {
       setMessages((prevMessages) => {
-        const allMessages = [...cloneDeep(prevMessages)];
-        if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-        allMessages[allMessages.length - 1].followUpPrompts = data.followUpPrompts;
+        const lastMsg = prevMessages[prevMessages.length - 1];
+        if (lastMsg.type === 'userMessage') return prevMessages;
+        const allMessages = [...prevMessages.slice(0, -1), { ...lastMsg, followUpPrompts: data.followUpPrompts }];
         addChatMessage(allMessages);
         return allMessages;
       });
@@ -788,6 +946,37 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     const chatId = params.chatId;
     const input = params.question;
     params.streaming = true;
+
+    const isEmptyValue = (value: unknown) => {
+      if (value == null) return true;
+      if (typeof value === 'string') return value.trim() === '';
+      if (Array.isArray(value)) return value.length === 0;
+      if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length === 0;
+      return false;
+    };
+    
+    const shouldRemoveEmptyApiMessage = (message?: MessageType) => {
+      if (!message || message.type !== 'apiMessage') return false;
+      const payload = {
+        sourceDocuments: message.sourceDocuments,
+        usedTools: message.usedTools,
+        artifacts: message.artifacts,
+        fileAnnotations: message.fileAnnotations,
+        agentReasoning: message.agentReasoning,
+        agentFlowExecutedData: message.agentFlowExecutedData,
+        action: message.action,
+        thinking: message.thinking,
+      };
+      return isEmptyValue(message.message) && Object.values(payload).every(isEmptyValue);
+    };
+
+    const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      if (props.onRequest && init) {
+        await props.onRequest(init);
+      }
+      return fetch(input, init);
+    };
+
     fetchEventSource(`${props.apiHost}/api/v1/prediction/${chatflowid}`, {
       openWhenHidden: true,
       method: 'POST',
@@ -795,6 +984,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
       headers: {
         'Content-Type': 'application/json',
       },
+      fetch: customFetch,
       async onopen(response) {
         if (response.ok && response.headers.get('content-type')?.startsWith(EventStreamContentType)) {
           return; // everything's good
@@ -815,9 +1005,15 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         }
       },
       async onmessage(ev) {
-        const payload = JSON.parse(ev.data);
+        let payload: any;
+        try {
+          payload = JSON.parse(ev.data);
+        } catch {
+          return;
+        }
         switch (payload.event) {
           case 'start':
+            isStreaming = true;
             setMessages((prevMessages) => [...prevMessages, { message: '', type: 'apiMessage' }]);
             break;
           case 'token':
@@ -835,6 +1031,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           case 'agentReasoning':
             updateLastMessageAgentReasoning(payload.data);
             break;
+          case 'thinking':
+            handleThinkingEvent(payload.data, payload.duration);
+            break;
           case 'agentFlowEvent':
             updateAgentFlowEvent(payload.data);
             break;
@@ -851,23 +1050,64 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             updateMetadata(payload.data, input);
             break;
           case 'error':
+            isStreaming = false;
             updateErrorMessage(payload.data);
+            closeResponse();
             break;
           case 'abort':
+            isStreaming = false;
             abortMessage();
             closeResponse();
             break;
           case 'end':
+            isStreaming = false;
+            finalizeThinking();
+            setMessages((prev) => {
+              addChatMessage(prev);
+              return prev;
+            });
             setLocalStorageChatflow(chatflowid, chatId);
             closeResponse();
+            break;
+          case 'tts_start':
+            handleTTSStart(payload.data);
+            break;
+          case 'tts_data':
+            handleTTSDataChunk(payload.data.audioChunk);
+            break;
+          case 'tts_end':
+            handleTTSEnd();
+            break;
+          case 'tts_abort':
+            handleTTSAbort(payload.data);
             break;
         }
       },
       async onclose() {
+        isStreaming = false;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (shouldRemoveEmptyApiMessage(last)) {
+            const cleaned = prev.slice(0, -1);
+            addChatMessage(cleaned);
+            return cleaned;
+          }
+          return prev;
+        });
         closeResponse();
       },
       onerror(err) {
         console.error('EventSource Error: ', err);
+        isStreaming = false;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (shouldRemoveEmptyApiMessage(last)) {
+            const cleaned = prev.slice(0, -1);
+            addChatMessage(cleaned);
+            return cleaned;
+          }
+          return prev;
+        });
         closeResponse();
         throw err;
       },
@@ -879,6 +1119,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     setUserInput('');
     setUploadedFiles([]);
     hasSoundPlayed = false;
+    isStreaming = false;
     setTimeout(() => {
       scrollToBottom();
     }, 100);
@@ -886,15 +1127,42 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
   const abortMessage = () => {
     setIsMessageStopping(false);
+
+    // Stop all TTS when aborting message
+    stopAllTTS();
+
     setMessages((prevMessages) => {
-      const allMessages = [...cloneDeep(prevMessages)];
-      if (allMessages[allMessages.length - 1].type === 'userMessage') return allMessages;
-      const lastAgentReasoning = allMessages[allMessages.length - 1].agentReasoning;
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      const lastAgentReasoning = lastMsg.agentReasoning;
       if (lastAgentReasoning && lastAgentReasoning.length > 0) {
-        allMessages[allMessages.length - 1].agentReasoning = lastAgentReasoning.filter((reasoning) => !reasoning.nextAgent);
+        return [...prevMessages.slice(0, -1), { ...lastMsg, agentReasoning: lastAgentReasoning.filter((reasoning) => !reasoning.nextAgent) }];
       }
-      return allMessages;
+      return prevMessages;
     });
+  };
+
+  const handleAbort = async () => {
+    setIsMessageStopping(true);
+    try {
+      await abortMessageQuery({
+        chatflowid: props.chatflowid,
+        apiHost: props.apiHost,
+        chatId: chatId(),
+        onRequest: props.onRequest,
+      });
+      setIsMessageStopping(false);
+    } catch (error) {
+      setIsMessageStopping(false);
+      console.error('Error aborting message:', error);
+    }
+  };
+
+  const hasAgentFlowExecutedData = () => {
+    const msgs = messages();
+    if (msgs.length === 0) return false;
+    const lastMsg = msgs[msgs.length - 1];
+    return lastMsg.type === 'apiMessage' && Array.isArray(lastMsg.agentFlowExecutedData) && lastMsg.agentFlowExecutedData.length > 0;
   };
 
   const handleFileUploads = async (uploads: IUploads) => {
@@ -975,7 +1243,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
   };
 
   // Handle form submission
-  const handleSubmit = async (value: string | object, action?: IAction | undefined | null, humanInput?: any) => {
+  const handleSubmit = async (
+    value: string | object,
+    action?: IAction | undefined | null,
+    humanInput?: any,
+    options?: { skipAddUserMessage?: boolean },
+  ) => {
     if (typeof value === 'string' && value.trim() === '') {
       const containsFile = previews().filter((item) => !item.mime.startsWith('image') && item.type !== 'audio').length > 0;
       if (!previews().length || (previews().length && containsFile)) {
@@ -990,8 +1263,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         .map(([key, value]) => `${key}: ${value}`)
         .join('\n');
     }
-
     setLoading(true);
+    stickyToBottom = true;
+    setShowScrollButton(false);
     scrollToBottom();
 
     let uploads: IUploads = previews().map((item) => {
@@ -1012,18 +1286,20 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
     clearPreviews();
 
-    setMessages((prevMessages) => {
-      const messages: MessageType[] = [...prevMessages, { message: value as string, type: 'userMessage', fileUploads: uploads }];
-      addChatMessage(messages);
-      return messages;
-    });
+    if (!options?.skipAddUserMessage) {
+      setMessages((prevMessages) => {
+        const messages: MessageType[] = [...prevMessages, { message: value as string, type: 'userMessage', fileUploads: uploads }];
+        addChatMessage(messages);
+        return messages;
+      });
+    }
 
     const body: IncomingInput = {
       question: value,
       chatId: chatId(),
     };
 
-    if (startInputType() === 'formInput') {
+    if (startInputType() === 'formInput' && Object.keys(formData).length > 0) {
       body.form = formData;
       delete body.question;
     }
@@ -1086,7 +1362,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         playReceiveSound();
 
         setMessages((prevMessages) => {
-          const allMessages = [...cloneDeep(prevMessages)];
           const newMessage = {
             message: text,
             id: data?.chatMessageId,
@@ -1097,11 +1372,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
             agentFlowExecutedData: data?.agentFlowExecutedData,
             action: data?.action,
             artifacts: data?.artifacts,
+            thinking: data?.reasonContent?.thinking,
+            thinkingDuration: data?.reasonContent?.thinkingDuration,
             type: 'apiMessage' as messageType,
             feedback: null,
             dateTime: new Date().toISOString(),
           };
-          allMessages.push(newMessage);
+          const allMessages = [...prevMessages, newMessage];
           addChatMessage(allMessages);
           return allMessages;
         });
@@ -1218,9 +1495,9 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         messages.push({ message: '', type: 'leadCaptureMessage' });
       }
       setMessages(messages);
+      setShowScrollButton(false);
     } catch (error: any) {
-      const errorData = error.response.data || `${error.response.status}: ${error.response.statusText}`;
-      console.error(`error: ${errorData}`);
+      console.error('clearChat failed:', error);
     }
   };
 
@@ -1228,9 +1505,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     if (props.clearChatOnReload) {
       clearChat();
       window.addEventListener('beforeunload', clearChat);
-      return () => {
-        window.removeEventListener('beforeunload', clearChat);
-      };
+      onCleanup(() => window.removeEventListener('beforeunload', clearChat));
     }
   });
 
@@ -1248,17 +1523,6 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
       // Filter out any empty prompts
       return setStarterPrompts(prompts.filter((prompt) => prompt !== ''));
-    }
-  });
-
-  // Auto scroll chat to bottom
-  createEffect(() => {
-    if (messages()) {
-      if (messages().length > 1) {
-        setTimeout(() => {
-          chatContainer?.scrollTo(0, chatContainer.scrollHeight);
-        }, 400);
-      }
     }
   });
 
@@ -1300,6 +1564,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               if (message.fileAnnotations) chatHistory.fileAnnotations = message.fileAnnotations;
               if (message.fileUploads) chatHistory.fileUploads = message.fileUploads;
               if (message.agentReasoning) chatHistory.agentReasoning = message.agentReasoning;
+              if ((message as any).reasonContent && typeof (message as any).reasonContent === 'object') {
+                chatHistory.thinking = (message as any).reasonContent.thinking;
+                chatHistory.thinkingDuration = (message as any).reasonContent.thinkingDuration;
+              }
+              if (message.thinking) chatHistory.thinking = message.thinking;
+              if (message.thinkingDuration !== undefined) chatHistory.thinkingDuration = message.thinkingDuration;
               if (message.action) chatHistory.action = message.action;
               if (message.artifacts) chatHistory.artifacts = message.artifacts;
               if (message.followUpPrompts) chatHistory.followUpPrompts = message.followUpPrompts;
@@ -1426,6 +1696,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
           setFullFileUploadAllowedTypes(chatbotConfig.fullFileUpload?.allowedUploadFileTypes);
         }
       }
+      setIsTTSEnabled(!!chatbotConfig.isTTSEnabled);
     }
 
     // eslint-disable-next-line solid/reactivity
@@ -1440,6 +1711,47 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         },
       ]);
     };
+  });
+
+  // TTS sourceBuffer updateend listener management
+  let currentSourceBuffer: SourceBuffer | null = null;
+  let updateEndHandler: (() => void) | null = null;
+
+  createEffect(() => {
+    const streamingState = ttsStreamingState();
+
+    // Remove previous listener if sourceBuffer changed
+    if (currentSourceBuffer && currentSourceBuffer !== streamingState.sourceBuffer && updateEndHandler) {
+      currentSourceBuffer.removeEventListener('updateend', updateEndHandler);
+      currentSourceBuffer = null;
+      updateEndHandler = null;
+    }
+
+    // Add listener to new sourceBuffer
+    if (streamingState.sourceBuffer && streamingState.sourceBuffer !== currentSourceBuffer) {
+      const sourceBuffer = streamingState.sourceBuffer;
+      currentSourceBuffer = sourceBuffer;
+
+      updateEndHandler = () => {
+        setTtsStreamingState((prevState) => ({
+          ...prevState,
+          isBuffering: false,
+        }));
+        setTimeout(() => processChunkQueue(), 0);
+      };
+
+      sourceBuffer.addEventListener('updateend', updateEndHandler);
+    }
+  });
+
+  // TTS cleanup on component unmount
+  onCleanup(() => {
+    cleanupTTSStreaming();
+    // Cleanup TTS timeout on unmount
+    if (ttsTimeoutRef) {
+      clearTimeout(ttsTimeoutRef);
+      ttsTimeoutRef = null;
+    }
   });
 
   createEffect(() => {
@@ -1461,7 +1773,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     } else {
       mimeType = blob.type.substring(0, pos);
     }
-
+    const ext = getRecordingExtensionForMime(mimeType);
     // read blob and add to previews
     const reader = new FileReader();
     reader.readAsDataURL(blob);
@@ -1471,7 +1783,7 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
         data: base64data,
         preview: '../assets/wave-sound.jpg',
         type: 'audio',
-        name: `audio_${Date.now()}.wav`,
+        name: `audio_${Date.now()}.${ext}`,
         mime: mimeType,
       };
       setPreviews((prevPreviews) => [...prevPreviews, upload]);
@@ -1705,6 +2017,525 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
     return false;
   };
 
+  // TTS Functions
+  const processChunkQueue = () => {
+    const currentState = ttsStreamingState();
+    if (!currentState.sourceBuffer || currentState.sourceBuffer.updating || currentState.chunkQueue.length === 0) {
+      return;
+    }
+
+    const chunk = currentState.chunkQueue[0];
+    if (!chunk) return;
+
+    try {
+      currentState.sourceBuffer.appendBuffer(chunk);
+      setTtsStreamingState((prevState) => ({
+        ...prevState,
+        chunkQueue: prevState.chunkQueue.slice(1),
+        isBuffering: true,
+      }));
+    } catch (error) {
+      console.error('Error appending chunk to buffer:', error);
+    }
+  };
+
+  const handleTTSStart = (data: { chatMessageId: string; format: string }) => {
+    setTTSAction(true);
+
+    // Ensure complete cleanup before starting new TTS
+    stopAllTTS();
+
+    setIsTTSLoading((prevState) => ({
+      ...prevState,
+      [data.chatMessageId]: true,
+    }));
+
+    setMessages((prevMessages) => {
+      const lastMsg = prevMessages[prevMessages.length - 1];
+      if (lastMsg.type === 'userMessage') return prevMessages;
+      const existingId = lastMsg.id || lastMsg.messageId;
+      let id = lastMsg.id;
+      if (!existingId) {
+        id = data.chatMessageId;
+      } else if (!lastMsg.id) {
+        id = existingId;
+      }
+      if (id === lastMsg.id) return prevMessages;
+      return [...prevMessages.slice(0, -1), { ...lastMsg, id }];
+    });
+
+    setTtsStreamingState({
+      mediaSource: null,
+      sourceBuffer: null,
+      audio: null,
+      chunkQueue: [],
+      isBuffering: false,
+      audioFormat: data.format,
+      abortController: null,
+    });
+
+    setTimeout(() => initializeTTSStreaming(data), 100);
+  };
+
+  const handleTTSDataChunk = (base64Data: string) => {
+    try {
+      const audioBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+      setTtsStreamingState((prevState) => {
+        const newState = {
+          ...prevState,
+          chunkQueue: [...prevState.chunkQueue, audioBuffer],
+        };
+
+        // Schedule processing after state update
+        if (prevState.sourceBuffer && !prevState.sourceBuffer.updating) {
+          setTimeout(() => processChunkQueue(), 0);
+        }
+
+        return newState;
+      });
+    } catch (error) {
+      console.error('Error handling TTS data chunk:', error);
+    }
+  };
+
+  const handleTTSEnd = () => {
+    const currentState = ttsStreamingState();
+    if (currentState.mediaSource && currentState.mediaSource.readyState === 'open') {
+      try {
+        // Process any remaining chunks first
+        if (currentState.sourceBuffer && currentState.chunkQueue.length > 0 && !currentState.sourceBuffer.updating) {
+          const remainingChunks = [...currentState.chunkQueue];
+          remainingChunks.forEach((chunk, index) => {
+            setTimeout(() => {
+              const state = ttsStreamingState();
+              if (state.sourceBuffer && !state.sourceBuffer.updating) {
+                try {
+                  state.sourceBuffer.appendBuffer(chunk);
+                  if (index === remainingChunks.length - 1) {
+                    setTimeout(() => {
+                      const finalState = ttsStreamingState();
+                      if (finalState.mediaSource && finalState.mediaSource.readyState === 'open') {
+                        finalState.mediaSource.endOfStream();
+                      }
+                    }, 100);
+                  }
+                } catch (error) {
+                  console.error('Error appending remaining chunk:', error);
+                }
+              }
+            }, index * 50);
+          });
+
+          setTtsStreamingState((prevState) => ({
+            ...prevState,
+            chunkQueue: [],
+          }));
+        } else if (currentState.sourceBuffer && !currentState.sourceBuffer.updating) {
+          currentState.mediaSource.endOfStream();
+        } else if (currentState.sourceBuffer) {
+          const handleFinalUpdateEnd = () => {
+            const finalState = ttsStreamingState();
+            if (finalState.mediaSource && finalState.mediaSource.readyState === 'open') {
+              finalState.mediaSource.endOfStream();
+            }
+          };
+          currentState.sourceBuffer.addEventListener('updateend', handleFinalUpdateEnd, { once: true });
+        }
+      } catch (error) {
+        console.error('Error ending TTS stream:', error);
+      }
+    }
+  };
+
+  const initializeTTSStreaming = (data: { chatMessageId: string; format: string }) => {
+    try {
+      const mediaSource = new MediaSource();
+      const audio = new Audio();
+
+      // Pre-configure audio element
+      audio.preload = 'none';
+      audio.autoplay = false;
+
+      audio.src = URL.createObjectURL(mediaSource);
+
+      const sourceOpenHandler = () => {
+        try {
+          const mimeType = data.format === 'mp3' ? 'audio/mpeg' : 'audio/mpeg';
+
+          // Check if MediaSource supports the MIME type
+          if (!MediaSource.isTypeSupported(mimeType)) {
+            console.error('MediaSource does not support MIME type:', mimeType);
+            return;
+          }
+
+          const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
+
+          setTtsStreamingState((prevState) => ({
+            ...prevState,
+            mediaSource,
+            sourceBuffer,
+            audio,
+          }));
+
+          // Start audio playback
+          audio.play().catch((playError) => {
+            if (playError.name === 'AbortError') return;
+            console.error('Error starting audio playback:', playError);
+            cleanupTTSStreaming();
+          });
+        } catch (error) {
+          console.error('Error setting up source buffer:', error);
+          console.error('MediaSource readyState:', mediaSource.readyState);
+          // Cleanup on error
+          cleanupTTSStreaming();
+        }
+      };
+
+      const playingHandler = () => {
+        setIsTTSLoading((prevState) => {
+          const newState = { ...prevState };
+          delete newState[data.chatMessageId];
+          return newState;
+        });
+        setIsTTSPlaying((prevState) => ({
+          ...prevState,
+          [data.chatMessageId]: true,
+        }));
+      };
+
+      const endedHandler = () => {
+        setIsTTSPlaying((prevState) => {
+          const newState = { ...prevState };
+          delete newState[data.chatMessageId];
+          return newState;
+        });
+        cleanupTTSStreaming();
+      };
+
+      const errorHandler = (event: Event) => {
+        console.error('Audio error during TTS playback:', event);
+        setIsTTSLoading((prev) => {
+          const newState = { ...prev };
+          delete newState[data.chatMessageId];
+          return newState;
+        });
+        setIsTTSPlaying((prev) => {
+          const newState = { ...prev };
+          delete newState[data.chatMessageId];
+          return newState;
+        });
+        cleanupTTSStreaming();
+      };
+
+      mediaSource.addEventListener('sourceopen', sourceOpenHandler);
+      audio.addEventListener('playing', playingHandler);
+      audio.addEventListener('ended', endedHandler);
+      audio.addEventListener('error', errorHandler);
+    } catch (error) {
+      console.error('Error initializing TTS streaming:', error);
+      // Ensure cleanup on initialization error
+      setIsTTSLoading((prev) => {
+        const newState = { ...prev };
+        delete newState[data.chatMessageId];
+        return newState;
+      });
+    }
+  };
+
+  const cleanupTTSStreaming = () => {
+    const currentState = ttsStreamingState();
+
+    if (currentState.abortController) {
+      currentState.abortController.abort();
+    }
+
+    if (currentState.audio) {
+      currentState.audio.pause();
+      currentState.audio.currentTime = 0;
+      currentState.audio.removeAttribute('src');
+      currentState.audio.load(); // Force reload to clear buffer
+      if (currentState.audio.src) {
+        URL.revokeObjectURL(currentState.audio.src);
+      }
+      // Remove all event listeners
+      currentState.audio.removeEventListener('playing', () => console.log('Playing'));
+      currentState.audio.removeEventListener('ended', () => console.log('Ended'));
+    }
+
+    if (currentState.sourceBuffer) {
+      // Clear any pending data in the source buffer
+      if (currentState.sourceBuffer.updating) {
+        try {
+          currentState.sourceBuffer.abort();
+        } catch (e) {
+          // Ignore abort errors
+        }
+      }
+
+      // Remove buffered data if possible
+      try {
+        if (currentState.sourceBuffer.buffered.length > 0) {
+          const start = currentState.sourceBuffer.buffered.start(0);
+          const end = currentState.sourceBuffer.buffered.end(currentState.sourceBuffer.buffered.length - 1);
+          currentState.sourceBuffer.remove(start, end);
+        }
+      } catch (e) {
+        // Ignore remove errors during cleanup
+      }
+
+      // Remove update listeners
+      if (currentState.sourceBuffer.onupdateend) {
+        currentState.sourceBuffer.removeEventListener('updateend', currentState.sourceBuffer.onupdateend);
+        currentState.sourceBuffer.onupdateend = null;
+      }
+    }
+
+    if (currentState.mediaSource) {
+      if (currentState.mediaSource.readyState === 'open') {
+        try {
+          // Remove source buffers before ending stream
+          if (currentState.sourceBuffer && currentState.mediaSource.sourceBuffers.length > 0) {
+            currentState.mediaSource.removeSourceBuffer(currentState.sourceBuffer);
+          }
+          currentState.mediaSource.endOfStream();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+      }
+      // Remove source open event listeners
+      currentState.mediaSource.removeEventListener('sourceopen', () => console.log('removed source open event listener'));
+    }
+
+    setTtsStreamingState({
+      mediaSource: null,
+      sourceBuffer: null,
+      audio: null,
+      chunkQueue: [],
+      isBuffering: false,
+      audioFormat: null,
+      abortController: null,
+    });
+  };
+
+  const cleanupTTSForMessage = (messageId: string) => {
+    const audioElements = ttsAudio();
+    if (audioElements[messageId]) {
+      audioElements[messageId].pause();
+      audioElements[messageId].currentTime = 0;
+      // Force cleanup of audio element
+      audioElements[messageId].src = '';
+      audioElements[messageId].load();
+      setTtsAudio((prev) => {
+        const newState = { ...prev };
+        delete newState[messageId];
+        return newState;
+      });
+    }
+
+    // Always cleanup streaming state when stopping any TTS
+    const streamingState = ttsStreamingState();
+    if (streamingState.audio || streamingState.mediaSource || streamingState.sourceBuffer) {
+      cleanupTTSStreaming();
+    }
+
+    setIsTTSPlaying((prev) => {
+      const newState = { ...prev };
+      delete newState[messageId];
+      return newState;
+    });
+
+    setIsTTSLoading((prev) => {
+      const newState = { ...prev };
+      delete newState[messageId];
+      return newState;
+    });
+  };
+
+  const handleTTSStop = async (messageId: string) => {
+    setTTSAction(true);
+
+    // Abort TTS request if active
+    try {
+      await abortTTSQuery({
+        apiHost: props.apiHost,
+        body: {
+          chatflowId: props.chatflowid,
+          chatId: chatId(),
+          chatMessageId: messageId,
+        },
+        onRequest: props.onRequest,
+      });
+    } catch (error) {
+      console.warn(`Error aborting TTS for message ${messageId}:`, error);
+    }
+
+    cleanupTTSForMessage(messageId);
+  };
+
+  const stopAllTTS = () => {
+    const audioElements = ttsAudio();
+    Object.keys(audioElements).forEach((messageId) => {
+      if (audioElements[messageId]) {
+        audioElements[messageId].pause();
+        audioElements[messageId].currentTime = 0;
+        // Force cleanup of each audio element
+        audioElements[messageId].src = '';
+        audioElements[messageId].load();
+      }
+    });
+    setTtsAudio({});
+
+    const streamingState = ttsStreamingState();
+    if (streamingState.abortController) {
+      streamingState.abortController.abort();
+    }
+
+    // Always cleanup streaming state
+    cleanupTTSStreaming();
+
+    setIsTTSPlaying({});
+    setIsTTSLoading({});
+  };
+
+  const handleTTSAbortAll = async () => {
+    const activeTTSMessages = Object.keys(isTTSLoading()).concat(Object.keys(isTTSPlaying()));
+    for (const messageId of activeTTSMessages) {
+      try {
+        await abortTTSQuery({
+          apiHost: props.apiHost,
+          body: {
+            chatflowId: props.chatflowid,
+            chatId: chatId(),
+            chatMessageId: messageId,
+          },
+          onRequest: props.onRequest,
+        });
+      } catch (error) {
+        console.warn(`Error aborting TTS for message ${messageId}:`, error);
+      }
+    }
+  };
+
+  const handleTTSClick = async (messageId: string, messageText: string) => {
+    const loadingState = isTTSLoading();
+    if (loadingState[messageId]) return;
+
+    const playingState = isTTSPlaying();
+    const audioElement = ttsAudio()[messageId];
+    if (playingState[messageId] || audioElement) {
+      await handleTTSStop(messageId);
+      return;
+    }
+
+    setTTSAction(true);
+
+    // Ensure complete cleanup before starting new TTS
+    await handleTTSAbortAll();
+    stopAllTTS();
+
+    handleTTSStart({ chatMessageId: messageId, format: 'mp3' });
+
+    try {
+      const abortController = new AbortController();
+      setTtsStreamingState((prev) => ({ ...prev, abortController }));
+
+      const response = await generateTTSQuery({
+        apiHost: props.apiHost,
+        body: {
+          chatId: chatId(),
+          chatflowId: props.chatflowid,
+          chatMessageId: messageId,
+          text: messageText,
+        },
+        onRequest: props.onRequest,
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`TTS request failed: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (reader) {
+        let buffer = '';
+        let done = false;
+        while (!done) {
+          if (abortController.signal.aborted) {
+            break;
+          }
+
+          const result = await reader.read();
+          done = result.done;
+          if (done) break;
+
+          const value = result.value;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.trim() && line.startsWith('data: ')) {
+              try {
+                const eventData = line.slice(6);
+                if (eventData === '[DONE]') break;
+
+                const event = JSON.parse(eventData);
+                switch (event.event) {
+                  case 'tts_start':
+                    break;
+                  case 'tts_data':
+                    if (!abortController.signal.aborted) {
+                      handleTTSDataChunk(event.data.audioChunk);
+                    }
+                    break;
+                  case 'tts_end':
+                    if (!abortController.signal.aborted) {
+                      handleTTSEnd();
+                    }
+                    break;
+                }
+              } catch (parseError) {
+                console.error('Error parsing SSE event:', parseError);
+              }
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        cleanupTTSForMessage(messageId);
+      } else {
+        console.error('Error with TTS:', error);
+        // Show error feedback to user
+        setIsTTSLoading((prev) => {
+          const newState = { ...prev };
+          delete newState[messageId];
+          return newState;
+        });
+        setIsTTSPlaying((prev) => {
+          const newState = { ...prev };
+          delete newState[messageId];
+          return newState;
+        });
+        cleanupTTSForMessage(messageId);
+      }
+    } finally {
+      setIsTTSLoading((prev) => {
+        const newState = { ...prev };
+        delete newState[messageId];
+        return newState;
+      });
+    }
+  };
+
+  const handleTTSAbort = (data: { chatMessageId: string }) => {
+    const messageId = data.chatMessageId;
+    cleanupTTSForMessage(messageId);
+  };
+
   createEffect(
     // listen for changes in previews
     on(previews, (uploads) => {
@@ -1805,12 +2636,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
 
           {props.showTitle ? (
             <div
-              class="flex flex-row items-center w-full h-[50px] absolute top-0 left-0 z-10"
+              class={`flex flex-row items-center w-full h-[${CHAT_HEADER_HEIGHT}px] absolute top-0 left-0 z-10`}
               style={{
                 background: props.titleBackgroundColor || props.bubbleBackgroundColor || defaultTitleBackgroundColor,
                 color: props.titleTextColor || props.bubbleTextColor || defaultBackgroundColor,
-                'border-top-left-radius': props.isFullPage ? '0px' : '6px',
-                'border-top-right-radius': props.isFullPage ? '0px' : '6px',
+                'border-top-left-radius': props.isFullPage || props.hasCustomHeader ? '0px' : '6px',
+                'border-top-right-radius': props.isFullPage || props.hasCustomHeader ? '0px' : '6px',
               }}
             >
               <Show when={props.titleAvatarSrc}>
@@ -1834,10 +2665,10 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
               </DeleteButton>
             </div>
           ) : null}
-          <div class="flex flex-col w-full h-full justify-start z-0">
+          <div class="relative flex flex-col w-full flex-1 min-h-0 justify-start z-0">
             <div
               ref={chatContainer}
-              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[70px] relative scrollable-container chatbot-chat-view scroll-smooth"
+              class="overflow-y-scroll flex flex-col flex-grow min-w-full w-full px-3 pt-[70px] relative scrollable-container chatbot-chat-view"
             >
               <For each={[...messages()]}>
                 {(message, index) => {
@@ -1870,6 +2701,8 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           showAvatar={props.botMessage?.showAvatar}
                           avatarSrc={props.botMessage?.avatarSrc}
                           chatFeedbackStatus={chatFeedbackStatus()}
+                          onRegenerateResponse={() => handleRegenerateResponse(index())}
+                          onMessageRendered={scrollToBottom}
                           fontSize={props.fontSize}
                           isLoading={loading() && index() === messages().length - 1}
                           showAgentMessages={props.showAgentMessages}
@@ -1881,6 +2714,13 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                           }}
                           dateTimeToggle={props.dateTimeToggle}
                           renderHTML={props.renderHTML}
+                          isTTSEnabled={isTTSEnabled()}
+                          isTTSLoading={isTTSLoading()}
+                          isTTSPlaying={isTTSPlaying()}
+                          handleTTSClick={handleTTSClick}
+                          handleTTSStop={handleTTSStop}
+                          hasCustomHeader={props.hasCustomHeader}
+                          dialogContainer={props.dialogContainer}
                         />
                       )}
                       {message.type === 'leadCaptureMessage' && leadsConfig()?.status && !getLocalStorageChatflow(props.chatflowid)?.lead && (
@@ -1907,7 +2747,22 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   );
                 }}
               </For>
+              <Show when={loading()}>
+                <div ref={bottomSpacer} style={{ 'flex-grow': '1' }} />
+              </Show>
             </div>
+            <Show when={showScrollButton()}>
+              <div class="absolute bottom-[140px] left-1/2 -translate-x-1/2 z-10">
+                <button
+                  class="flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md border border-gray-200 text-gray-500 hover:text-gray-700 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                  onClick={forceScrollToBottom}
+                  title="Scroll to bottom"
+                  type="button"
+                >
+                  <ChevronDownIcon class="w-5 h-5" />
+                </button>
+              </div>
+            </Show>
             <Show when={messages().length === 1}>
               <Show when={starterPrompts().length > 0}>
                 <div class="w-full flex flex-row flex-wrap px-5 py-[10px] gap-2">
@@ -2021,8 +2876,12 @@ export const Bot = (botProps: BotProps & { class?: string }) => {
                   handleFileChange={handleFileChange}
                   sendMessageSound={props.textInput?.sendMessageSound}
                   sendSoundLocation={props.textInput?.sendSoundLocation}
-                  enableInputHistory={true}
+                  enableInputHistory={props.textInput?.enableInputHistory ?? true}
                   maxHistorySize={10}
+                  isLoading={loading()}
+                  showAbortButton={loading() && hasAgentFlowExecutedData()}
+                  isMessageStopping={isMessageStopping()}
+                  onAbort={handleAbort}
                 />
               )}
             </div>
