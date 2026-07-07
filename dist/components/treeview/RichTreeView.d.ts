@@ -1,8 +1,8 @@
 import { JSXElement } from 'solid-js';
-import './TreeView.css';
 type RichTreeViewProps = {
     children: JSXElement;
     defaultExpanded?: string[];
+    defaultSelected?: string;
     onNodeSelect?: (itemId: string) => void;
     highlightItems?: string[];
     multiSelect?: boolean;
@@ -18,6 +18,7 @@ type TreeItemProps = {
     expandedIcon?: JSXElement;
     endIcon?: JSXElement;
     isLeaf?: boolean;
+    borderColor?: string;
 };
 export declare const TreeItem: (props: TreeItemProps) => import("solid-js").JSX.Element;
 export {};

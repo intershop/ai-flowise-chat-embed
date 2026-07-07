@@ -11,4 +11,11 @@ export * from './XIcon';
 export * from './TickIcon';
 export * from './AttachmentIcon';
 export * from './SparklesIcon';
+export * from './VolumeIcon';
+export * from './SquareStopIcon';
+export * from './ChevronDownIcon';
+export * from './TracesIcon';
+export * from './FileIcon';
+export * from './GlobeIcon';
+export * from './DownloadFileIcon';
 //# sourceMappingURL=index.d.ts.map

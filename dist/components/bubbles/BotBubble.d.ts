@@ -1,3 +1,4 @@
+import { FeedbackRatingType } from '@/queries/sendMessageQuery';
 import { IAction, MessageType } from '../Bot';
 import { DateTimeToggleTheme } from '@/features/bubble/types';
 type Props = {
@@ -21,6 +22,17 @@ type Props = {
     renderHTML?: boolean;
     handleActionClick: (elem: any, action: IAction | undefined | null) => void;
     handleSourceDocumentsClick: (src: any) => void;
+    onRegenerateResponse?: () => void;
+    onMessageRendered?: () => void;
+    messageRatings?: Record<string, FeedbackRatingType>;
+    onMessageRatingChange?: (messageId: string, rating: FeedbackRatingType) => void;
+    isTTSEnabled?: boolean;
+    isTTSLoading?: Record<string, boolean>;
+    isTTSPlaying?: Record<string, boolean>;
+    handleTTSClick?: (messageId: string, messageText: string) => void;
+    handleTTSStop?: (messageId: string) => void;
+    hasCustomHeader?: boolean;
+    dialogContainer?: HTMLElement;
 };
 export declare const BotBubble: (props: Props) => import("solid-js").JSX.Element;
 export {};
