@@ -211,7 +211,6 @@ export const TextInput = (props: TextInputProps) => {
               ref={imgUploadRef as HTMLInputElement}
               type="file"
               onChange={handleFileChange}
-              accept="image/*"
             />
           </>
         ) : null}
