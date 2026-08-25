@@ -211,11 +211,7 @@ export const TextInput = (props: TextInputProps) => {
               ref={imgUploadRef as HTMLInputElement}
               type="file"
               onChange={handleFileChange}
-              accept={
-                props.uploadsConfig?.imgUploadSizeAndTypes?.length
-                  ? props.uploadsConfig?.imgUploadSizeAndTypes.map((allowed) => allowed.fileTypes).join(',')
-                  : '*'
-              }
+              accept="image/*"
             />
           </>
         ) : null}
